@@ -18,7 +18,7 @@ app.get('/', (req, res) => {
   res.json('Profindly server running!');
 });
 
-app.use('/api/patient', patientRuter);
+app.use('/api/patients', patientRuter);
 
 // Error handling
 app.use(notFound);

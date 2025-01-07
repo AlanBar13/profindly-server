@@ -1,6 +1,6 @@
 import { z } from 'zod';
 
-export const patientSchema = z.object({
+const basePatientSchema = z.object({
     name: z.string(),
     age: z.number(),
     email: z.string().email(),
@@ -11,3 +11,6 @@ export const patientSchema = z.object({
     location: z.string(),
     langauges: z.array(z.string()),
 });
+
+export const patientSchema = basePatientSchema.strict();
+export const updatedPatientSchema = patientSchema.partial();
