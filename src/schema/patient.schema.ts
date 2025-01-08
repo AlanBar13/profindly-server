@@ -9,7 +9,7 @@ const basePatientSchema = z.object({
     treatment: z.string().optional(),
     budget: z.array(z.number()),
     location: z.string(),
-    langauges: z.array(z.string()),
+    languages: z.array(z.string()),
 });
 
 export const patientSchema = basePatientSchema.strict();

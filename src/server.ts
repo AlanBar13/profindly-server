@@ -2,8 +2,10 @@ import express from 'express';
 import morgan from 'morgan';
 import { connectDB } from './config/database';
 
-import patientRuter from './routes/patient.route';
 import { errorHandler, notFound } from './middleware/error.middleware';
+
+import patientRouter from './routes/patient.route';
+import specialistRouter from './routes/specialist.route';
 
 const app = express();
 const port = Bun.env.PORT || 5000;
@@ -18,7 +20,8 @@ app.get('/', (req, res) => {
   res.json('Profindly server running!');
 });
 
-app.use('/api/patients', patientRuter);
+app.use('/api/patients', patientRouter);
+app.use('/api/specialists', specialistRouter);
 
 // Error handling
 app.use(notFound);

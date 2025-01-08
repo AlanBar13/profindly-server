@@ -34,7 +34,7 @@ export const updatePatient = asyncHandler(async (req: Request, res: Response) =>
         patient.treatment = req.body.treatment || patient.treatment;
         patient.budget = req.body.budget || patient.budget;
         patient.location = req.body.location || patient.location;
-        patient.langauges = req.body.langauges || patient.langauges;
+        patient.languages = req.body.languages || patient.languages;
 
         const updatedPatient = await patient.save();
         res.json(updatedPatient);

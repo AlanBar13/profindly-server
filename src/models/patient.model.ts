@@ -9,7 +9,7 @@ const patientSchema = new mongoose.Schema({
     treatment: { type: String },
     budget: [{ type: Number }],
     location: { type: String },
-    langauges: [{ type: String }],
+    languages: [{ type: String }],
 });
 
 export type Patient = mongoose.InferSchemaType<typeof patientSchema>;
