@@ -6,6 +6,7 @@ import { errorHandler, notFound } from './middleware/error.middleware';
 
 import patientRouter from './routes/patient.route';
 import specialistRouter from './routes/specialist.route';
+import matchingRouter from './routes/matching.route';
 
 const app = express();
 const port = Bun.env.PORT || 5000;
@@ -22,6 +23,7 @@ app.get('/', (req, res) => {
 
 app.use('/api/patients', patientRouter);
 app.use('/api/specialists', specialistRouter);
+app.use('/api/matching', matchingRouter);
 
 // Error handling
 app.use(notFound);
