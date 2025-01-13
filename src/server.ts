@@ -1,29 +1,31 @@
-import express from 'express';
-import morgan from 'morgan';
-import { connectDB } from './config/database';
+import express from "express";
+import morgan from "morgan";
+import { connectDB } from "./config/database";
 
-import { errorHandler, notFound } from './middleware/error.middleware';
+import { errorHandler, notFound } from "./middleware/error.middleware";
 
-import patientRouter from './routes/patient.route';
-import specialistRouter from './routes/specialist.route';
-import matchingRouter from './routes/matching.route';
+import patientRouter from "./routes/patient.route";
+import specialistRouter from "./routes/specialist.route";
+import matchingRouter from "./routes/matching.route";
+import userRouter from "./routes/users.route";
 
 const app = express();
 const port = Bun.env.PORT || 5000;
 
-app.use(morgan(':method :url :status - :response-time ms'));
+app.use(morgan(":method :url :status - :response-time ms"));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
 connectDB();
 
-app.get('/', (req, res) => {
-  res.json('Profindly server running!');
+app.get("/", (req, res) => {
+  res.json("Profindly server running!");
 });
 
-app.use('/api/patients', patientRouter);
-app.use('/api/specialists', specialistRouter);
-app.use('/api/matching', matchingRouter);
+app.use("/api/patients", patientRouter);
+app.use("/api/specialists", specialistRouter);
+app.use("/api/matching", matchingRouter);
+app.use("/api/users", userRouter);
 
 // Error handling
 app.use(notFound);

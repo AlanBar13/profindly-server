@@ -1,16 +1,17 @@
-import * as mongoose from 'mongoose';
+import * as mongoose from "mongoose";
 
 const patientSchema = new mongoose.Schema({
-    name: { type: String, required: true },
-    age: { type: Number, required: true },
-    email: { type: String, required: true },
-    syntoms: [{ type: String }],
-    diagnostic: { type: String },
-    treatment: { type: String },
-    budget: [{ type: Number }],
-    location: { type: String },
-    languages: [{ type: String }],
+  name: { type: String, required: true },
+  age: { type: Number, required: true },
+  email: { type: String, required: true },
+  syntoms: [{ type: String }],
+  diagnostic: { type: String },
+  treatment: { type: String },
+  budget: [{ type: Number }],
+  location: { type: String },
+  languages: [{ type: String }],
+  user: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
 });
 
 export type Patient = mongoose.InferSchemaType<typeof patientSchema>;
-export const PatientModel = mongoose.model<Patient>('Patient', patientSchema);
+export const PatientModel = mongoose.model<Patient>("Patient", patientSchema);
