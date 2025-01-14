@@ -13,18 +13,27 @@ export const getUsers = asyncHandler(async (req: Request, res: Response) => {
   res.json(users);
 });
 
-export const getUser = asyncHandler(async (req: Request, res: Response) => {
-  const user = await UserModel.findById(req.params.id);
-  if (user) {
-    res.json(user);
-  } else {
-    res.status(404);
-    throw new Error("User not found");
+export const getUserProfile = asyncHandler(
+  async (req: Request, res: Response) => {
+    const userAuthId = req.user?.auth_id;
+    if (!userAuthId) {
+      throw new Error("Not Authenticated, failed to retreive id");
+    }
+    
+    const user = await UserModel.findOne({
+      auth_id: userAuthId,
+    });
+    if (user) {
+      res.json(user);
+    } else {
+      res.status(404);
+      throw new Error("User not found");
+    }
   }
-});
+);
 
 export const updateUser = asyncHandler(async (req: Request, res: Response) => {
-  const user = await UserModel.findById(req.params.id);
+  const user = await UserModel.findOne({ auth_id: req.params.id });
   if (user) {
     user.name = req.body.name || user.name;
     user.lastname = req.body.lastname || user.lastname;
@@ -42,7 +51,7 @@ export const updateUser = asyncHandler(async (req: Request, res: Response) => {
 });
 
 export const deleteUser = asyncHandler(async (req: Request, res: Response) => {
-  const user = await UserModel.deleteOne({ _id: req.params.id });
+  const user = await UserModel.deleteOne({ auth_id: req.params.id });
   if (user.deletedCount > 0) {
     res.json({ message: "User removed" });
   } else {
