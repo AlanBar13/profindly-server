@@ -1,4 +1,4 @@
-# profindli
+# profindly
 
 To install dependencies:
 
@@ -10,6 +10,12 @@ To run:
 
 ```bash
 bun run server.ts
+```
+
+To run on development mode:
+
+```bash
+bun run dev
 ```
 
 This project was created using `bun init` in bun v1.1.42. [Bun](https://bun.sh) is a fast all-in-one JavaScript runtime.
