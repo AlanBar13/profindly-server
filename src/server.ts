@@ -3,6 +3,7 @@ import morgan from "morgan";
 import { connectDB } from "./config/database";
 
 import { errorHandler, notFound } from "./middleware/error.middleware";
+import { clerkMiddleware } from '@clerk/express'
 
 import patientRouter from "./routes/patient.route";
 import specialistRouter from "./routes/specialist.route";
@@ -17,6 +18,7 @@ const port = Bun.env.PORT || 5000;
 app.use(morgan(":method :url :status - :response-time ms"));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+app.use(clerkMiddleware())
 
 connectDB();
 

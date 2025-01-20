@@ -1,8 +1,16 @@
 import type { Request, Response } from "express";
 import asyncHandler from "express-async-handler";
 import { UserModel } from "../models/user.model";
+import { getAuth } from "@clerk/express";
 
 export const createUser = asyncHandler(async (req: Request, res: Response) => {
+  const existingUser = await UserModel.findOne({
+    $or: [{ email: req.body.email }, { auth_id: req.body.auth_id }],
+  });
+  if (existingUser) {
+    res.status(403);
+    throw new Error("User already exist");
+  }
   const user = new UserModel(req.body);
   await user.save();
   res.json(user);
@@ -15,13 +23,14 @@ export const getUsers = asyncHandler(async (req: Request, res: Response) => {
 
 export const getUserProfile = asyncHandler(
   async (req: Request, res: Response) => {
-    const userAuthId = req.user?.auth_id;
-    if (!userAuthId) {
+    const { userId } = getAuth(req);
+    console.log(userId)
+    if (!userId) {
       throw new Error("Not Authenticated, failed to retreive id");
     }
-    
+
     const user = await UserModel.findOne({
-      auth_id: userAuthId,
+      auth_id: userId,
     });
     if (user) {
       res.json(user);
