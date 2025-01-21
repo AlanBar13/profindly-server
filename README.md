@@ -1,4 +1,4 @@
-# profindly
+# Profindly
 
 To install dependencies:
 
