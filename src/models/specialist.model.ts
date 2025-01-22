@@ -1,8 +1,11 @@
 import * as mongoose from "mongoose";
 
 const specialistSchema = new mongoose.Schema({
-  name: { type: String, required: true },
-  email: { type: String, required: true },
+  prefix: String,
+  brief_description: { type: String, required: true },
+  links: [{ type: String }],
+  photo_link: String,
+  description: String,
   budget_range: [{ type: Number }],
   schedule: { type: String },
   location: { type: String },
@@ -14,7 +17,6 @@ const specialistSchema = new mongoose.Schema({
   rating: { type: Number },
   reviews: [{ type: String }],
   user: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
-  //appointments: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Appointment' }],
 });
 
 export type Specialist = mongoose.InferSchemaType<typeof specialistSchema>;

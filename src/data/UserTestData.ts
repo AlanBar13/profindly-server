@@ -8,9 +8,9 @@ export const users = [
     auth_id: "auth12345",
   },
   {
-    name: "Jane",
-    lastname: "Smith",
-    email: "jane.smith@example.com",
+    name: "Dafne",
+    lastname: "Zamora",
+    email: "dafne@example.com",
     role: "specialist",
     login_type: "email",
     auth_id: "auth12346",

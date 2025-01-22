@@ -12,14 +12,14 @@ export const createSpecialist = asyncHandler(
 
 export const getSpecialists = asyncHandler(
   async (req: Request, res: Response) => {
-    const specialists = await SpecialistModel.find();
+    const specialists = await SpecialistModel.find({}).sort({ rating: -1 }).populate("user");
     res.json(specialists);
   }
 );
 
 export const getSpecialist = asyncHandler(
   async (req: Request, res: Response) => {
-    const specialist = await SpecialistModel.findById(req.params.id);
+    const specialist = await SpecialistModel.findById(req.params.id).populate("user");
     if (specialist) {
       res.json(specialist);
     } else {
@@ -33,8 +33,9 @@ export const updateSpecialist = asyncHandler(
   async (req: Request, res: Response) => {
     const specialist = await SpecialistModel.findById(req.params.id);
     if (specialist) {
-      specialist.name = req.body.name || specialist.name;
-      specialist.email = req.body.email || specialist.email;
+      specialist.prefix = req.body.prefix || specialist.prefix;
+      specialist.brief_description = req.body.brief_description || specialist.brief_description;
+      specialist.links = req.body.links || specialist.links;
       specialist.budget_range =
         req.body.budget_range || specialist.budget_range;
       specialist.schedule = req.body.schedule || specialist.schedule;
