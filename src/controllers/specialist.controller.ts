@@ -1,6 +1,6 @@
 import type { Request, Response } from "express";
 import asyncHandler from "express-async-handler";
-import { SpecialistModel } from "../models/specialist.model";
+import { SpecialistModel, type Specialist } from "../models/specialist.model";
 
 export const createSpecialist = asyncHandler(
   async (req: Request, res: Response) => {
@@ -10,16 +10,45 @@ export const createSpecialist = asyncHandler(
   }
 );
 
+// TODO: Add cache to this endpoint
+export const autoComplete = asyncHandler(
+  async (req: Request, res: Response) => {
+    const { query, field } = req.query;
+    if (!query) {
+      res.status(404);
+      throw new Error("Query is required");
+    }
+
+    const regex = new RegExp(query as string, "i");
+    const searchField = (field as string) || "speciality";
+
+    const results = await SpecialistModel.find({
+      [searchField]: { $regex: regex },
+    }).select(searchField).limit(5);
+
+    const uniqueFields = [...new Set(
+      results.flatMap(result => result[searchField as keyof Specialist])
+    )];
+
+    res.json(uniqueFields.slice(0, 3));
+  }
+);
+
+// TODO: Add cache to this endpoint
 export const getSpecialists = asyncHandler(
   async (req: Request, res: Response) => {
-    const specialists = await SpecialistModel.find({}).sort({ rating: -1 }).populate("user");
+    const specialists = await SpecialistModel.find({})
+      .sort({ rating: -1 })
+      .populate("user");
     res.json(specialists);
   }
 );
 
 export const getSpecialist = asyncHandler(
   async (req: Request, res: Response) => {
-    const specialist = await SpecialistModel.findById(req.params.id).populate("user");
+    const specialist = await SpecialistModel.findById(req.params.id).populate(
+      "user"
+    );
     if (specialist) {
       res.json(specialist);
     } else {
@@ -34,7 +63,8 @@ export const updateSpecialist = asyncHandler(
     const specialist = await SpecialistModel.findById(req.params.id);
     if (specialist) {
       specialist.prefix = req.body.prefix || specialist.prefix;
-      specialist.brief_description = req.body.brief_description || specialist.brief_description;
+      specialist.brief_description =
+        req.body.brief_description || specialist.brief_description;
       specialist.links = req.body.links || specialist.links;
       specialist.budget_range =
         req.body.budget_range || specialist.budget_range;

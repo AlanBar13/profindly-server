@@ -47,6 +47,9 @@ export const updateUser = asyncHandler(async (req: Request, res: Response) => {
     user.name = req.body.name || user.name;
     user.lastname = req.body.lastname || user.lastname;
     user.email = req.body.email || user.email;
+    user.gender = req.body.gender || user.gender;
+    user.preferred_language = req.body.preferred_language || user.preferred_language;
+    user.preferred_location = req.body.preferred_location || user.preferred_location;
     user.role = req.body.role || user.role;
     user.login_type = req.body.login_type || user.login_type;
     user.auth_id = req.body.auth_id || user.auth_id;
