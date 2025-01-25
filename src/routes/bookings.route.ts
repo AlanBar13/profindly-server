@@ -22,6 +22,7 @@ router
   .post(validateData(bookingsSchema), createBooking);
 router.route("/slots").get(getAvailableSlots);
 router.route("/current").get(getCurrentBookings);
+router.route("/available").get(getAvailableSlots);
 router
   .route("/:id")
   .get(getBooking)
