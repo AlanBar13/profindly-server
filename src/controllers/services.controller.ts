@@ -29,6 +29,7 @@ export const updateService = asyncHandler(
   async (req: Request, res: Response) => {
     const service = await ServicesModel.findById(req.params.id);
     if (service) {
+      service.specialist_id = req.body.specialist_id || service.specialist_id;
       service.label = req.body.label || service.label;
       service.thumbnail = req.body.thumbnail || service.thumbnail;
       service.aviability = req.body.aviability || service.aviability;
@@ -53,3 +54,13 @@ export const deleteService = asyncHandler(
     }
   }
 );
+
+export const getServicesBySpecialist = asyncHandler(async (req: Request, res: Response) => {
+  const service = await ServicesModel.findOne({ specialist_id: req.params.id });
+  if (!service) {
+    res.status(404);
+    throw new Error("Service not found");
+  }
+  
+  res.json(service._id);
+});

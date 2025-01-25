@@ -10,6 +10,7 @@ import {
   getService,
   updateService,
   deleteService,
+  getServicesBySpecialist,
 } from "../controllers/services.controller";
 
 const router = express.Router();
@@ -23,5 +24,6 @@ router
   .get(getService)
   .patch(validateData(updatedServiceSchema), updateService)
   .delete(deleteService);
+router.route("/specialist/:id").get(getServicesBySpecialist);
 
 export default router;
