@@ -5,8 +5,8 @@ const baseUserSchema = z.object({
     lastname: z.string(),
     email: z.string().email(),
     gender: z.string(),
-    preferred_language: z.string(),
-    preferred_location: z.string(),
+    preferred_language: z.string().optional(),
+    preferred_location: z.string().optional(),
     login_type: z.string(),
     auth_id: z.string()
 });
