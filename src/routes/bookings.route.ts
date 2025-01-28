@@ -1,4 +1,5 @@
 import express from "express";
+import { requireAuth } from '@clerk/express'
 import { validateData } from "../middleware/validation.middleware";
 import {
   bookingsSchema,
@@ -23,9 +24,9 @@ router
 router.route("/slots").get(getAvailableSlots);
 router.route("/current").get(getCurrentBookings);
 router.route("/available").get(getAvailableSlots);
+router.route("/user").get(requireAuth(), getBooking);
 router
   .route("/:id")
-  .get(getBooking)
   .patch(validateData(updatedBookingsSchema), updateBooking)
   .delete(deleteBooking);
 

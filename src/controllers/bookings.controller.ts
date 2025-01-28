@@ -4,6 +4,8 @@ import { BookingsModel } from "../models/bookings.model";
 import { ServicesModel } from "../models/services.model";
 import { getTimeSlots, parseTime } from "../services/bookings.service";
 import dayjs from "dayjs";
+import { getAuth } from "@clerk/express";
+import { UserModel } from "../models/user.model";
 
 interface Timings {
   day: string;
@@ -38,7 +40,29 @@ export const getBookings = asyncHandler(async (req: Request, res: Response) => {
 });
 
 export const getBooking = asyncHandler(async (req: Request, res: Response) => {
-  const booking = await BookingsModel.findById(req.params.id);
+  const { userId } = getAuth(req);
+  if (!userId) {
+    res.status(401);
+    throw new Error("Unauthorized");
+  }
+
+  const user = await UserModel.findOne({ auth_id: userId });
+  if (!user) {
+    res.status(404);
+    throw new Error("User not found");
+  }
+
+  const booking = await BookingsModel.find({
+    client: user._id,
+  }).populate({
+    path: "service",
+    select: "label specialist",
+    populate: {
+      path: "specialist",
+      select: "user prefix",
+      populate: { path: "user", select: "name lastname" },
+    },
+  });
   if (booking) {
     res.json(booking);
   } else {
@@ -76,7 +100,7 @@ export const deleteBooking = asyncHandler(
 
 export const getSlots = asyncHandler(async (req: Request, res: Response) => {
   const serviceId = req.query.serviceId;
-  console.log(serviceId);
+
   const service = await ServicesModel.findById(serviceId);
   if (!service) {
     res.status(404);
@@ -103,7 +127,6 @@ export const getSlots = asyncHandler(async (req: Request, res: Response) => {
 export const getCurrentBookings = asyncHandler(
   async (req: Request, res: Response) => {
     const { serviceId, date } = req.query;
-    console.log(serviceId, date);
     const bookings = await BookingsModel.find({
       service_id: serviceId,
       bookDate: date,
@@ -126,7 +149,7 @@ export const getAvailableSlots = asyncHandler(
 
     // Check if the service is available for the day
     const aviabilityData = service.aviability as Aviability;
-    const timing = aviabilityData.timings.find(timing => timing.day === day);
+    const timing = aviabilityData.timings.find((timing) => timing.day === day);
     if (!timing) {
       res.json([]);
       return;
@@ -134,7 +157,7 @@ export const getAvailableSlots = asyncHandler(
 
     // Get the slots for the day
     const slots = getTimeSlots(
-          `${timing.opening_hour}:${timing.opening_minute} ${timing.opening_AM_or_PM}`,
+      `${timing.opening_hour}:${timing.opening_minute} ${timing.opening_AM_or_PM}`,
       `${timing.closing_hour}:${timing.closing_minute} ${timing.closing_AM_or_PM}`,
       aviabilityData.duration,
       aviabilityData.breakBefore,
@@ -149,15 +172,18 @@ export const getAvailableSlots = asyncHandler(
 
     let availableTimeSlots = slots;
     // If the date is today, filter out the slots that have already passed
-    if (dayjs(date as string).isSame(dayjs(), 'day')) {
-      const currentTime = dayjs().format('hh:mm A');
+    if (dayjs(date as string).isSame(dayjs(), "day")) {
+      const currentTime = dayjs().format("hh:mm A");
 
-      availableTimeSlots = availableTimeSlots?.filter(slot => {
+      availableTimeSlots = availableTimeSlots?.filter((slot) => {
         const currentTimeIn24 = parseTime(currentTime);
         const slotTime = parseTime(slot.start);
-        return currentTimeIn24.hours < slotTime.hours || (currentTimeIn24.hours === slotTime.hours && currentTimeIn24.minutes <= slotTime.minutes);
-      }
-      );
+        return (
+          currentTimeIn24.hours < slotTime.hours ||
+          (currentTimeIn24.hours === slotTime.hours &&
+            currentTimeIn24.minutes <= slotTime.minutes)
+        );
+      });
     }
 
     // If there are no booked slots, return all available slots
@@ -166,11 +192,13 @@ export const getAvailableSlots = asyncHandler(
     } else {
       // If there are booked slots, filter out the slots that are already booked
       const availableSlots = availableTimeSlots?.filter((slot) => {
-        return !bookedSlots.some((bookedSlot) => 
-          bookedSlot.startTime === slot.start && bookedSlot.endTime === slot.end
+        return !bookedSlots.some(
+          (bookedSlot) =>
+            bookedSlot.startTime === slot.start &&
+            bookedSlot.endTime === slot.end
         );
       });
-      
+
       res.json(availableSlots ?? []);
     }
   }

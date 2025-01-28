@@ -1,9 +1,10 @@
 import { z } from "zod";
 
 const baseServicesSchema = z.object({
-  specialist_id: z.string(),
+  specialist: z.string(),
   label: z.string(),
   thumbnail: z.string(),
+  location: z.string(),
   aviability: z.any(),
 });
 
