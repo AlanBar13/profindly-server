@@ -28,6 +28,6 @@ router.route("/user").get(requireAuth(), getBooking);
 router
   .route("/:id")
   .patch(validateData(updatedBookingsSchema), updateBooking)
-  .delete(deleteBooking);
+  .delete(requireAuth(), deleteBooking);
 
 export default router;

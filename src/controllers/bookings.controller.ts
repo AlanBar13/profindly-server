@@ -88,7 +88,19 @@ export const updateBooking = asyncHandler(
 
 export const deleteBooking = asyncHandler(
   async (req: Request, res: Response) => {
-    const booking = await BookingsModel.deleteOne({ _id: req.params.id });
+    const { userId } = getAuth(req);
+    if (!userId) {
+      res.status(401);
+      throw new Error("Unauthorized");
+    }
+
+    const user = await UserModel.findOne({ auth_id: userId });
+    if (!user) {
+      res.status(404);
+      throw new Error("User not found");
+    }
+
+    const booking = await BookingsModel.deleteOne({ _id: req.params.id, client: user._id });
     if (booking.deletedCount > 0) {
       res.json({ message: "Booking removed" });
     } else {
