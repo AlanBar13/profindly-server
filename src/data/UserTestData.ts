@@ -6,6 +6,7 @@ export const users = [
     role: "specialist",
     login_type: "email",
     auth_id: "auth12345",
+    gender: "male",
   },
   {
     name: "Dafne",
@@ -14,6 +15,7 @@ export const users = [
     role: "specialist",
     login_type: "email",
     auth_id: "auth12346",
+    gender: "female",
   },
   {
     name: "Carlos",
@@ -22,6 +24,7 @@ export const users = [
     role: "specialist",
     login_type: "google",
     auth_id: "auth12347",
+    gender: "male",
   },
   {
     name: "Emily",
@@ -30,6 +33,7 @@ export const users = [
     role: "specialist",
     login_type: "email",
     auth_id: "auth12348",
+    gender: "female",
   },
   {
     name: "Liam",
@@ -38,6 +42,7 @@ export const users = [
     role: "specialist",
     login_type: "facebook",
     auth_id: "auth12349",
+    gender: "male",
   },
   {
     name: "Sophia",
@@ -46,6 +51,7 @@ export const users = [
     role: "specialist",
     login_type: "email",
     auth_id: "auth12350",
+    gender: "female",
   },
   {
     name: "Miguel",
@@ -54,6 +60,7 @@ export const users = [
     role: "specialist",
     login_type: "google",
     auth_id: "auth12351",
+    gender: "male",
   },
   {
     name: "Anna",
@@ -62,6 +69,7 @@ export const users = [
     role: "specialist",
     login_type: "email",
     auth_id: "auth12352",
+    gender: "female",
   },
   {
     name: "Oliver",
@@ -70,6 +78,7 @@ export const users = [
     role: "specialist",
     login_type: "facebook",
     auth_id: "auth12353",
+    gender: "male",
   },
   {
     name: "Chloe",
@@ -78,5 +87,6 @@ export const users = [
     role: "specialist",
     login_type: "google",
     auth_id: "auth12354",
+    gender: "female",
   },
 ];

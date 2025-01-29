@@ -1,6 +1,7 @@
 import type { Request, Response } from "express";
 import asyncHandler from "express-async-handler";
 import { SpecialistModel, type Specialist } from "../models/specialist.model";
+import type { Filter } from "../types/Filter";
 
 export const createSpecialist = asyncHandler(
   async (req: Request, res: Response) => {
@@ -24,11 +25,15 @@ export const autoComplete = asyncHandler(
 
     const results = await SpecialistModel.find({
       [searchField]: { $regex: regex },
-    }).select(searchField).limit(5);
+    })
+      .select(searchField)
+      .limit(5);
 
-    const uniqueFields = [...new Set(
-      results.flatMap(result => result[searchField as keyof Specialist])
-    )];
+    const uniqueFields = [
+      ...new Set(
+        results.flatMap((result) => result[searchField as keyof Specialist])
+      ),
+    ];
 
     res.json(uniqueFields.slice(0, 3));
   }
@@ -37,10 +42,40 @@ export const autoComplete = asyncHandler(
 // TODO: Add cache to this endpoint
 export const getSpecialists = asyncHandler(
   async (req: Request, res: Response) => {
-    const specialists = await SpecialistModel.find({})
-      .sort({ rating: -1 })
-      .populate("user");
-    res.json(specialists);
+    const { category, speciality, location, years } = req.query;
+
+    // Narrow down the search by category, speciality, location, and years
+    const filter: Filter = {};
+    if (category !== undefined) {
+      filter.category = decodeURIComponent(category as string);
+    }
+
+    if (speciality !== undefined) {
+      filter.speciality = decodeURIComponent(speciality as string);
+    }
+
+    if (location !== undefined) {
+      filter.location = decodeURIComponent(location as string);
+    }
+
+    if (years !== undefined) {
+      filter.years = decodeURIComponent(years as string);
+    }
+
+    if (Object.keys(filter).length > 0) {
+      console.log("filter", filter);
+      // narrow down the search by filter
+      const specialists = await SpecialistModel.find(filter)
+        .sort({ rating: -1 })
+        .populate("user");
+      
+      res.json(specialists);
+    } else {
+      const specialists = await SpecialistModel.find({})
+        .sort({ rating: -1 })
+        .populate("user");
+      res.json(specialists);
+    }
   }
 );
 

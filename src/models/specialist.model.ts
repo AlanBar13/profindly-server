@@ -17,6 +17,9 @@ const specialistSchema = new mongoose.Schema({
   rating: { type: Number },
   reviews: [{ type: String }],
   user: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
+  is_active: { type: Boolean, default: true },
+  is_verified: { type: Boolean, default: false },
+  category: { type: String, enum: ["medicine", "mental-health", "physical-health", "nutrition", "ophthalmology", "vet", "nursing", "dentistry", "other"], required: true },
 });
 
 export type Specialist = mongoose.InferSchemaType<typeof specialistSchema>;
