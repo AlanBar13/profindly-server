@@ -27,7 +27,8 @@ export const autoComplete = asyncHandler(
       [searchField]: { $regex: regex },
     })
       .select(searchField)
-      .limit(5);
+      .limit(5)
+      .lean();
 
     const uniqueFields = [
       ...new Set(
@@ -66,14 +67,22 @@ export const getSpecialists = asyncHandler(
       console.log("filter", filter);
       // narrow down the search by filter
       const specialists = await SpecialistModel.find(filter)
+        .select(
+          "prefix brief_description photo_link budget_range location rating user"
+        )
         .sort({ rating: -1 })
-        .populate("user");
-      
+        .populate("user")
+        .lean();
+
       res.json(specialists);
     } else {
       const specialists = await SpecialistModel.find({})
+        .select(
+          "prefix brief_description photo_link budget_range location rating user"
+        )
         .sort({ rating: -1 })
-        .populate("user");
+        .populate({ path: "user", select: "name lastname" })
+        .lean();
       res.json(specialists);
     }
   }
@@ -81,9 +90,9 @@ export const getSpecialists = asyncHandler(
 
 export const getSpecialist = asyncHandler(
   async (req: Request, res: Response) => {
-    const specialist = await SpecialistModel.findById(req.params.id).populate(
-      "user"
-    );
+    const specialist = await SpecialistModel.findById(req.params.id)
+      .populate("user")
+      .lean();
     if (specialist) {
       res.json(specialist);
     } else {

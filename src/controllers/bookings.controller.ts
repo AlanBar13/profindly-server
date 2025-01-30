@@ -28,14 +28,27 @@ interface Aviability {
 
 export const createBooking = asyncHandler(
   async (req: Request, res: Response) => {
+    const { userId } = getAuth(req);
+    if (!userId) {
+      res.status(401);
+      throw new Error("Unauthorized");
+    }
+
+    const user = await UserModel.findOne({ auth_id: userId });
+    if (!user) {
+      res.status(404);
+      throw new Error("User not found");
+    }
+
     const booking = new BookingsModel(req.body);
+    booking.client = user._id;
     await booking.save();
     res.json(booking);
   }
 );
 
 export const getBookings = asyncHandler(async (req: Request, res: Response) => {
-  const bookings = await BookingsModel.find();
+  const bookings = await BookingsModel.find().lean();
   res.json(bookings);
 });
 
@@ -54,15 +67,17 @@ export const getBooking = asyncHandler(async (req: Request, res: Response) => {
 
   const booking = await BookingsModel.find({
     client: user._id,
-  }).populate({
-    path: "service",
-    select: "label specialist",
-    populate: {
-      path: "specialist",
-      select: "user prefix",
-      populate: { path: "user", select: "name lastname" },
-    },
-  });
+  })
+    .populate({
+      path: "service",
+      select: "label specialist",
+      populate: {
+        path: "specialist",
+        select: "user prefix",
+        populate: { path: "user", select: "name lastname" },
+      },
+    })
+    .lean();
   if (booking) {
     res.json(booking);
   } else {
@@ -100,7 +115,10 @@ export const deleteBooking = asyncHandler(
       throw new Error("User not found");
     }
 
-    const booking = await BookingsModel.deleteOne({ _id: req.params.id, client: user._id });
+    const booking = await BookingsModel.deleteOne({
+      _id: req.params.id,
+      client: user._id,
+    });
     if (booking.deletedCount > 0) {
       res.json({ message: "Booking removed" });
     } else {
@@ -142,7 +160,7 @@ export const getCurrentBookings = asyncHandler(
     const bookings = await BookingsModel.find({
       service_id: serviceId,
       bookDate: date,
-    });
+    }).lean();
 
     res.json(bookings);
   }
@@ -180,7 +198,7 @@ export const getAvailableSlots = asyncHandler(
     const bookedSlots = await BookingsModel.find({
       service_id: serviceId,
       bookDate: date,
-    });
+    }).lean();
 
     let availableTimeSlots = slots;
     // If the date is today, filter out the slots that have already passed

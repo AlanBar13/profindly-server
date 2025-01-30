@@ -20,7 +20,7 @@ const router = express.Router();
 router
   .route("/")
   .get(getBookings)
-  .post(validateData(bookingsSchema), createBooking);
+  .post(validateData(bookingsSchema), requireAuth(), createBooking);
 router.route("/slots").get(getAvailableSlots);
 router.route("/current").get(getCurrentBookings);
 router.route("/available").get(getAvailableSlots);

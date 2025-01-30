@@ -13,7 +13,7 @@ const bookingsSchema = new mongoose.Schema({
   },
   startTime: String,
   endTime: String,
-  status: { type: String, enum: ["booked", "pending", "cancelled", "completed"], default: "booked"},
+  status: { type: String, enum: ["booked", "pending", "cancelled", "completed"], default: "pending"},
   bookDate: String,
 });
 
