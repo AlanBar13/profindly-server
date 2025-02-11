@@ -1,7 +1,7 @@
 import type { Request, Response } from "express";
 import asyncHandler from "express-async-handler";
 import { UserModel } from "../models/user.model";
-import { getAuth } from "@clerk/express";
+import { getAuth, clerkClient } from "@clerk/express";
 
 export const createUser = asyncHandler(async (req: Request, res: Response) => {
   const existingUser = await UserModel.findOne({
@@ -24,7 +24,7 @@ export const getUsers = asyncHandler(async (req: Request, res: Response) => {
 export const getUserProfile = asyncHandler(
   async (req: Request, res: Response) => {
     const { userId } = getAuth(req);
-    console.log(userId)
+    console.log(userId);
     if (!userId) {
       throw new Error("Not Authenticated, failed to retreive id");
     }
@@ -48,8 +48,10 @@ export const updateUser = asyncHandler(async (req: Request, res: Response) => {
     user.lastname = req.body.lastname || user.lastname;
     user.email = req.body.email || user.email;
     user.gender = req.body.gender || user.gender;
-    user.preferred_language = req.body.preferred_language || user.preferred_language;
-    user.preferred_location = req.body.preferred_location || user.preferred_location;
+    user.preferred_language =
+      req.body.preferred_language || user.preferred_language;
+    user.preferred_location =
+      req.body.preferred_location || user.preferred_location;
     user.role = req.body.role || user.role;
     user.login_type = req.body.login_type || user.login_type;
     user.auth_id = req.body.auth_id || user.auth_id;
@@ -71,3 +73,30 @@ export const deleteUser = asyncHandler(async (req: Request, res: Response) => {
     throw new Error("User not found");
   }
 });
+
+export const upgradeUserToSpecialist = asyncHandler(
+  async (req: Request, res: Response) => {
+    const { auth_id } = req.body;
+
+    const user = await UserModel.findOne({
+      auth_id,
+    });
+
+    if (!user) {
+      res.status(404);
+      throw new Error("User not found");
+    }
+
+    user.role = "specialist";
+
+    await user.save();
+
+    await clerkClient.users.updateUserMetadata(auth_id, {
+      publicMetadata: {
+        specialist: true,
+      },
+    });
+
+    res.json({ message: "User upgraded to specialist sucessfully" });
+  }
+);

@@ -2,6 +2,7 @@ import type { Request, Response } from "express";
 import asyncHandler from "express-async-handler";
 import { SpecialistModel, type Specialist } from "../models/specialist.model";
 import type { Filter } from "../types/Filter";
+import { s3Service } from "../services/s3";
 
 export const createSpecialist = asyncHandler(
   async (req: Request, res: Response) => {
@@ -143,5 +144,16 @@ export const deleteSpecialist = asyncHandler(
       res.status(404);
       throw new Error("Specialist not found");
     }
+  }
+);
+
+export const uploadSpecialistPhoto = asyncHandler(
+  async (req: Request, res: Response) => {
+    const file = req.file as Express.Multer.File;
+    const isPublic = req.body.isPublic as boolean;
+
+    const response = await s3Service.uploadFile(file, isPublic);
+
+    res.json(response);
   }
 );
