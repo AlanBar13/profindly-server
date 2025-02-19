@@ -24,7 +24,6 @@ export const getUsers = asyncHandler(async (req: Request, res: Response) => {
 export const getUserProfile = asyncHandler(
   async (req: Request, res: Response) => {
     const { userId } = getAuth(req);
-    console.log(userId);
     if (!userId) {
       throw new Error("Not Authenticated, failed to retreive id");
     }

@@ -3,11 +3,27 @@ import asyncHandler from "express-async-handler";
 import { SpecialistModel, type Specialist } from "../models/specialist.model";
 import type { Filter } from "../types/Filter";
 import { s3Service } from "../services/s3";
+import emailService from "../services/email.service";
+import { getAuth, clerkClient } from "@clerk/express";
+import { UserModel } from "../models/user.model";
 
 export const createSpecialist = asyncHandler(
   async (req: Request, res: Response) => {
+    const { userId } = getAuth(req);
+    const user = await UserModel.findOne({ auth_id: userId });
+    if(!user){
+      throw new Error(`User not found`)
+    }
+
     const specialist = new SpecialistModel(req.body);
+    specialist.user = user._id;
     await specialist.save();
+    await clerkClient.users.updateUserMetadata(userId!, {
+      publicMetadata: {
+        specialist_form_filled: true
+      }
+    })
+    await emailService.sendSpecialistWelcomeMessage(user.email, `${user.name} ${user.lastname}`, specialist.prefix ?? "")
     res.json(specialist);
   }
 );

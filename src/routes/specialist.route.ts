@@ -14,6 +14,7 @@ import {
   autoComplete,
   uploadSpecialistPhoto,
 } from "../controllers/specialist.controller";
+import { requireAuth } from "@clerk/express";
 import upload from "../config/upload";
 
 const router = express.Router();
@@ -21,7 +22,7 @@ const router = express.Router();
 router
   .route("/")
   .get(getSpecialists)
-  .post(validateData(specialistSchema), createSpecialist);
+  .post(requireAuth(), validateData(specialistSchema), createSpecialist);
 router.route("/autocomplete").get(autoComplete);
 router.route("/photo").post(upload.single("photo"), uploadSpecialistPhoto);
 router
