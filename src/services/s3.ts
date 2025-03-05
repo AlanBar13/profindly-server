@@ -8,6 +8,7 @@ import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 
 class S3Service {
   private bucketName = Bun.env.AWS_S3_BUCKET_NAME;
+  private region: string;
   private client: S3Client;
 
   constructor() {
@@ -24,6 +25,7 @@ class S3Service {
       forcePathStyle: true,
     });
     this.client = client;
+    this.region = region;
   }
 
   async uploadFile(file: Express.Multer.File, isPublic: boolean) {
@@ -54,7 +56,7 @@ class S3Service {
   }
 
   getFileUrl(key: string): string {
-    return `https://${this.bucketName}.s3.amazonaws.com/${key}`;
+    return `https://${this.bucketName}.s3.${this.region}.amazonaws.com/${key}`;
   }
 
   async getPreSignedUrl(key: string) {

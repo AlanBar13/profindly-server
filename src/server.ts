@@ -1,5 +1,6 @@
 import express from "express";
 import morgan from "morgan";
+import helmet from "helmet";
 import { connectDB } from "./config/database";
 
 import { errorHandler, notFound } from "./middleware/error.middleware";
@@ -15,6 +16,7 @@ import bookingRouter from "./routes/bookings.route";
 const app = express();
 const port = Bun.env.PORT || 5000;
 
+app.use(helmet());
 app.use(morgan(":method :url :status - :response-time ms"));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));

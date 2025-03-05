@@ -1,7 +1,6 @@
 import { z } from "zod";
 
 const baseServicesSchema = z.object({
-  specialist: z.string(),
   label: z.string(),
   thumbnail: z.string(),
   location: z.string(),

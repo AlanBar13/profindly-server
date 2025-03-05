@@ -10,9 +10,15 @@ import { UserModel } from "../models/user.model";
 export const createSpecialist = asyncHandler(
   async (req: Request, res: Response) => {
     const { userId } = getAuth(req);
-    const user = await UserModel.findOne({ auth_id: userId });
-    if(!user){
-      throw new Error(`User not found`)
+    const user = await UserModel.findOne({ auth_id: userId }).lean();
+    if (!user) {
+      throw new Error(`User not found`);
+    }
+
+    const exist = await SpecialistModel.findOne({ user: user._id }).lean();
+    if (exist) {
+      res.status(400);
+      throw new Error(`User already has a Specialist Profile`);
     }
 
     const specialist = new SpecialistModel(req.body);
@@ -20,10 +26,14 @@ export const createSpecialist = asyncHandler(
     await specialist.save();
     await clerkClient.users.updateUserMetadata(userId!, {
       publicMetadata: {
-        specialist_form_filled: true
-      }
-    })
-    await emailService.sendSpecialistWelcomeMessage(user.email, `${user.name} ${user.lastname}`, specialist.prefix ?? "")
+        specialist_form_filled: true,
+      },
+    });
+    await emailService.sendSpecialistWelcomeMessage(
+      user.email,
+      `${user.name} ${user.lastname}`,
+      specialist.prefix ?? ""
+    );
     res.json(specialist);
   }
 );
@@ -81,7 +91,6 @@ export const getSpecialists = asyncHandler(
     }
 
     if (Object.keys(filter).length > 0) {
-      console.log("filter", filter);
       // narrow down the search by filter
       const specialists = await SpecialistModel.find(filter)
         .select(

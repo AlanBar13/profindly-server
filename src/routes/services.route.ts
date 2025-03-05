@@ -5,25 +5,25 @@ import {
   updatedServiceSchema,
 } from "../schema/services.schema";
 import {
-  createService,
+  createorUpdateService,
   getServices,
   getService,
   updateService,
   deleteService,
   getServicesBySpecialist,
+  getSpecialistService,
 } from "../controllers/services.controller";
+import { requireAuth } from "@clerk/express";
 
 const router = express.Router();
 
-router
-  .route("/")
-  .get(getServices)
-  .post(validateData(servicesSchema), createService);
+router.route("/specialist").get(requireAuth(), getSpecialistService);
+router.route("/specialist/:id").get(getServicesBySpecialist);
+router.route("/").get(getServices).post(requireAuth(), createorUpdateService);
 router
   .route("/:id")
   .get(getService)
   .patch(validateData(updatedServiceSchema), updateService)
   .delete(deleteService);
-router.route("/specialist/:id").get(getServicesBySpecialist);
 
 export default router;

@@ -34,7 +34,7 @@ export const createBooking = asyncHandler(
       throw new Error("Unauthorized");
     }
 
-    const user = await UserModel.findOne({ auth_id: userId });
+    const user = await UserModel.findOne({ auth_id: userId }).lean();
     if (!user) {
       res.status(404);
       throw new Error("User not found");
@@ -59,18 +59,24 @@ export const getBooking = asyncHandler(async (req: Request, res: Response) => {
     throw new Error("Unauthorized");
   }
 
-  const user = await UserModel.findOne({ auth_id: userId });
+  const user = await UserModel.findOne({ auth_id: userId }).lean();
   if (!user) {
     res.status(404);
     throw new Error("User not found");
   }
 
+  const today = dayjs();
+
   const booking = await BookingsModel.find({
     client: user._id,
+    bookingStart: {
+      $gte: today.startOf("day").toDate(),
+      // $lte: today.endOf("week").toDate(),
+    },
   })
     .populate({
       path: "service",
-      select: "label specialist",
+      select: "label location specialist",
       populate: {
         path: "specialist",
         select: "user prefix",
@@ -131,7 +137,7 @@ export const deleteBooking = asyncHandler(
 export const getSlots = asyncHandler(async (req: Request, res: Response) => {
   const serviceId = req.query.serviceId;
 
-  const service = await ServicesModel.findById(serviceId);
+  const service = await ServicesModel.findById(serviceId).lean();
   if (!service) {
     res.status(404);
     throw new Error("Service not found");
@@ -171,7 +177,7 @@ export const getAvailableSlots = asyncHandler(
     const { serviceId, date } = req.query;
     const day = dayjs(date as string).format("dddd");
 
-    const service = await ServicesModel.findById(serviceId);
+    const service = await ServicesModel.findById(serviceId).lean();
     if (!service) {
       res.status(404);
       throw new Error("Service not found");
