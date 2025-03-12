@@ -14,11 +14,11 @@ import {
 const router = express.Router();
 
 router.route("/").get(getUsers).post(validateData(userSchema), createUser);
+router.route("/profile").get(requireAuth(), getUserProfile);
+router.route("/upgradeUser").post(upgradeUserToSpecialist);
 router
   .route("/:id")
   .patch(validateData(updatedUserSchema), updateUser)
   .delete(deleteUser);
-router.route("/profile").get(requireAuth(), getUserProfile);
-router.route("/upgradeUser").post(upgradeUserToSpecialist);
 
 export default router;

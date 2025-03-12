@@ -7,6 +7,7 @@ const userSchema = new mongoose.Schema({
   preferred_language: String,
   preferred_location: String,
   email: { type: String, required: true },
+  notificationToken: String,
   role: {
     type: String,
     enum: ["user", "patient", "specialist"],

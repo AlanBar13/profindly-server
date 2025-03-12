@@ -12,6 +12,7 @@ import matchingRouter from "./routes/matching.route";
 import userRouter from "./routes/users.route";
 import servicesRouter from "./routes/services.route";
 import bookingRouter from "./routes/bookings.route";
+import notificationsRouter from "./routes/notifications.route";
 
 const app = express();
 const port = Bun.env.PORT || 5000;
@@ -35,6 +36,7 @@ app.use("/api/v1/matching", matchingRouter);
 app.use("/api/v1/users", userRouter);
 app.use("/api/v1/services", servicesRouter);
 app.use("/api/v1/bookings", bookingRouter);
+app.use("/api/v1/notifications", notificationsRouter);
 
 // Error handling
 app.use(notFound);

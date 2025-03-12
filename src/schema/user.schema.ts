@@ -7,6 +7,7 @@ const baseUserSchema = z.object({
     gender: z.string(),
     preferred_language: z.string().optional(),
     preferred_location: z.string().optional(),
+    notificationToken: z.string().optional(),
     login_type: z.string(),
     auth_id: z.string()
 });

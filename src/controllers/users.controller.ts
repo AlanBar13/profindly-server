@@ -51,6 +51,8 @@ export const updateUser = asyncHandler(async (req: Request, res: Response) => {
       req.body.preferred_language || user.preferred_language;
     user.preferred_location =
       req.body.preferred_location || user.preferred_location;
+    user.notificationToken =
+      req.body.notificationToken || user.notificationToken;
     user.role = req.body.role || user.role;
     user.login_type = req.body.login_type || user.login_type;
     user.auth_id = req.body.auth_id || user.auth_id;
