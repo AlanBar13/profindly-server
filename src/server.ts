@@ -4,7 +4,8 @@ import helmet from "helmet";
 import { connectDB } from "./config/database";
 
 import { errorHandler, notFound } from "./middleware/error.middleware";
-import { clerkMiddleware } from '@clerk/express'
+import { clerkMiddleware } from "@clerk/express";
+import swaggerUi from "swagger-ui-express";
 
 import patientRouter from "./routes/patient.route";
 import specialistRouter from "./routes/specialist.route";
@@ -13,6 +14,7 @@ import userRouter from "./routes/users.route";
 import servicesRouter from "./routes/services.route";
 import bookingRouter from "./routes/bookings.route";
 import notificationsRouter from "./routes/notifications.route";
+import { swaggerSpec } from "./config/swagger";
 
 const app = express();
 const port = Bun.env.PORT || 5000;
@@ -21,13 +23,15 @@ app.use(helmet());
 app.use(morgan(":method :url :status - :response-time ms"));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
-app.use(clerkMiddleware())
+app.use(clerkMiddleware());
 
 connectDB();
 
 app.get("/", (req, res) => {
   res.json("Profindly server running!");
 });
+
+app.use("/api-docs", swaggerUi.serve, swaggerUi.setup(swaggerSpec));
 
 // Routes
 app.use("/api/v1/patients", patientRouter);
