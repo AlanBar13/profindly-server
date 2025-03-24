@@ -21,6 +21,7 @@ const specialistSchema = new mongoose.Schema({
   is_active: { type: Boolean, default: true },
   is_verified: { type: Boolean, default: false },
   category: { type: String, enum: categories, required: true },
+  service: { type: mongoose.Schema.Types.ObjectId, ref: "Services" },
 });
 
 export type Specialist = mongoose.InferSchemaType<typeof specialistSchema>;

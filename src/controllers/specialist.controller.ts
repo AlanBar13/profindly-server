@@ -150,6 +150,7 @@ export const updateSpecialist = asyncHandler(
       specialist.rating = req.body.rating || specialist.rating;
       specialist.reviews = req.body.reviews || specialist.reviews;
       specialist.user = req.body.user || specialist.user;
+      specialist.service = req.body.service || specialist.service;
 
       const updatedSpecialist = await specialist.save();
       res.json(updatedSpecialist);

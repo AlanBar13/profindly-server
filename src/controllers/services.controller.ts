@@ -36,6 +36,10 @@ export const createorUpdateService = asyncHandler(
       const service = new ServicesModel(req.body);
       service.specialist = specialist._id;
       await service.save();
+
+      // Add service to specialist
+      specialist.service = service._id;
+      await specialist.save()
       res.json(service);
     }
   }

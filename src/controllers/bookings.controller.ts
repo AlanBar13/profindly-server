@@ -1,11 +1,12 @@
 import type { Request, Response } from "express";
 import asyncHandler from "express-async-handler";
+import dayjs from "dayjs";
+import { getAuth } from "@clerk/express";
 import { BookingsModel } from "../models/bookings.model";
 import { ServicesModel } from "../models/services.model";
 import { getTimeSlots, parseTime } from "../services/bookings.service";
-import dayjs from "dayjs";
-import { getAuth } from "@clerk/express";
 import { UserModel } from "../models/user.model";
+import notificationsService from "../services/notifications.service";
 
 interface Timings {
   day: string;
@@ -43,6 +44,15 @@ export const createBooking = asyncHandler(
     const booking = new BookingsModel(req.body);
     booking.client = user._id;
     await booking.save();
+
+    await notificationsService.sendNotificationByService(
+      req.body.service,
+      "Se Agendo una nueva cita",
+      `${req.body.bookDate} ${req.body.startTime} - ${req.body.startTime} Revisa las notificaiones para mas detalle`,
+      user._id.toString(),
+      "info",
+      booking._id.toString(),
+    );
     res.json(booking);
   }
 );
@@ -121,11 +131,25 @@ export const deleteBooking = asyncHandler(
       throw new Error("User not found");
     }
 
-    const booking = await BookingsModel.deleteOne({
+    const booking = await BookingsModel.findOne({ _id: req.params.id, client: user._id }).lean();
+    if (!booking) {
+      res.status(404);
+      throw new Error("Booking not found");
+    }
+
+    const bookingDeleted = await BookingsModel.deleteOne({
       _id: req.params.id,
       client: user._id,
     });
-    if (booking.deletedCount > 0) {
+    if (bookingDeleted.deletedCount > 0) {
+      await notificationsService.sendNotificationByService(
+        booking.service._id.toString(),
+        "Se cancelo una cita",
+        `${booking.bookDate} ${booking.startTime} - ${booking.endTime} Revisa las notificaiones para mas detalle`,
+        user._id.toString(),
+        "info",
+        booking._id.toString()
+      );
       res.json({ message: "Booking removed" });
     } else {
       res.status(404);
