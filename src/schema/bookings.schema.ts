@@ -9,5 +9,6 @@ export const bookingsSchema = z.object({
 });
 
 export const updatedBookingsSchema = z.object({
-    status: z.string()
+    status: z.string(),
+    fromToken: z.string().optional()
 })

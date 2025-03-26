@@ -24,6 +24,14 @@ export const getAllNotifications = asyncHandler(
   }
 );
 
+export const getNotification = asyncHandler(
+  async (req: Request, res: Response) => {
+    const { id } = req.params;
+    const notifications = await notificationsService.getNotification(id);
+    res.json(notifications);
+  }
+);
+
 export const getUserNotifications = asyncHandler(
   async (req: Request, res: Response) => {
     const { userId } = getAuth(req);

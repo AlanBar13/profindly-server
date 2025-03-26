@@ -137,7 +137,7 @@ router.route("/user").get(requireAuth(), getBooking);
  */
 router
   .route("/:id")
-  .patch(validateData(updatedBookingsSchema), updateBooking)
+  .patch(requireAuth(), validateData(updatedBookingsSchema), updateBooking)
   .delete(requireAuth(), deleteBooking);
 
 export default router;

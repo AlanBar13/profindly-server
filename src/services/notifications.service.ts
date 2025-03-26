@@ -1,7 +1,6 @@
 import { ExpoNotificationService } from "./expo-notification.service";
 import { NotificationsModel } from "../models/notifications.models";
 import { UserModel } from "../models/user.model";
-import { SpecialistModel } from "../models/specialist.model";
 import { ServicesModel } from "../models/services.model";
 
 class NotificationsService {
@@ -11,12 +10,24 @@ class NotificationsService {
     this.expoNotificationService = new ExpoNotificationService();
   }
 
+  /**
+   * Sends a notification to a user identified by the given token.
+   *
+   * @param {string} token - The notification token of the recipient user.
+   * @param {string} title - The title of the notification.
+   * @param {string} body - The body message of the notification.
+   * @param {string} user_id - The ID of the user sending the notification.
+   * @param {string} [type="info"] - The type of the notification (default is "info").
+   * @returns {Promise<any>} - A promise that resolves when the notification is sent.
+   * @throws {Error} - Throws an error if the token is not found in the User DB.
+   */
   async sendNotification(
     token: string,
     title: string,
     body: string,
     user_id: string,
-    type: string = "info"
+    type: string = "info",
+    bookingId?: string,
   ) {
     const to = await UserModel.findOne({ notificationToken: token });
     if (!to) {
@@ -29,6 +40,7 @@ class NotificationsService {
       title,
       message: body,
       type,
+      booking: bookingId,
     });
     const newNotification = await notification.save();
     await newNotification.populate({ path: "from", select: "name lastname" });
@@ -41,6 +53,18 @@ class NotificationsService {
     );
   }
 
+  /**
+   * Sends a notification by service.
+   *
+   * @param serviceId - The ID of the service.
+   * @param title - The title of the notification.
+   * @param body - The body content of the notification.
+   * @param user_id - The ID of the user sending the notification.
+   * @param type - The type of the notification (default is "info").
+   * @param bookingId - The ID of the booking (optional).
+   * @returns A promise that resolves when the notification is sent.
+   * @throws Will throw an error if the service is not found.
+   */
   async sendNotificationByService(
     serviceId: string,
     title: string,
@@ -62,7 +86,6 @@ class NotificationsService {
       throw new Error("Service not found");
     }
     const specialist = service.specialist as any;
-    console.log(service);
     const user = specialist.user as any;
     const token = user.notificationToken;
 
@@ -103,6 +126,14 @@ class NotificationsService {
       .populate({ path: "to", select: "name lastname" })
       .sort({ createdAt: -1 })
       .limit(10)
+      .lean();
+  }
+
+  async getNotification(id: string) {
+    return await NotificationsModel.findOne({ _id: id })
+      .populate({ path: "from", select: "name lastname notificationToken" })
+      .populate({ path: "to", select: "name lastname notificationToken" })
+      .populate({ path: "booking" })
       .lean();
   }
 

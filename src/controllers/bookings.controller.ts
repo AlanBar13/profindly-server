@@ -48,10 +48,10 @@ export const createBooking = asyncHandler(
     await notificationsService.sendNotificationByService(
       req.body.service,
       "Se Agendo una nueva cita",
-      `${req.body.bookDate} ${req.body.startTime} - ${req.body.startTime} Revisa las notificaiones para mas detalle`,
+      `${req.body.bookDate} ${req.body.startTime} - ${req.body.startTime} Revisa las notificaiones para mas detalles`,
       user._id.toString(),
-      "info",
-      booking._id.toString(),
+      "action",
+      booking._id.toString()
     );
     res.json(booking);
   }
@@ -104,11 +104,55 @@ export const getBooking = asyncHandler(async (req: Request, res: Response) => {
 
 export const updateBooking = asyncHandler(
   async (req: Request, res: Response) => {
-    const booking = await BookingsModel.findById(req.params.id);
+    const { userId } = getAuth(req);
+    if (!userId) {
+      res.status(401);
+      throw new Error("Unauthorized");
+    }
+
+    const user = await UserModel.findOne({ auth_id: userId }).lean();
+    if (!user) {
+      res.status(404);
+      throw new Error("User not found");
+    }
+
+    const booking = await BookingsModel.findOne({
+      _id: req.params.id,
+    });
     if (booking) {
+      const now = dayjs();
+      const start = dayjs(booking.bookingStart);
+      if (booking.bookingStart && start < now) {
+        res.status(400);
+        throw new Error("Cannot update booking");
+      }
+
       booking.status = req.body.status || booking.status;
 
       const updatedBooking = await booking.save();
+      switch (req.body.status) {
+        case "cancelled":
+          await notificationsService.sendNotification(
+            req.body.fromToken,
+            "Se cancelo una cita",
+            `El especialista cancelo la cita, ${booking.bookDate} ${booking.startTime} - ${booking.endTime}`,
+            user._id.toString(),
+            "info"
+          );
+          break;
+        case "booked":
+          await notificationsService.sendNotification(
+            req.body.fromToken,
+            "Tu cita fue confirmada",
+            `Tu cita fue confirmada, ${booking.bookDate} ${booking.startTime} - ${booking.endTime}`,
+            user._id.toString(),
+            "info"
+          );
+          break;
+        default:
+          console.log("No notification sent");
+          break;
+      }
       res.json(updatedBooking);
     } else {
       res.status(404);
@@ -131,7 +175,10 @@ export const deleteBooking = asyncHandler(
       throw new Error("User not found");
     }
 
-    const booking = await BookingsModel.findOne({ _id: req.params.id, client: user._id }).lean();
+    const booking = await BookingsModel.findOne({
+      _id: req.params.id,
+      client: user._id,
+    }).lean();
     if (!booking) {
       res.status(404);
       throw new Error("Booking not found");

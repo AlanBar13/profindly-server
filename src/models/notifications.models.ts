@@ -23,7 +23,7 @@ const notificationsSchema = new mongoose.Schema(
     },
     type: {
       type: String,
-      enum: ["info", "message", "alert"],
+      enum: ["info", "message", "alert", "action"],
       default: "info",
     },
     booking: {

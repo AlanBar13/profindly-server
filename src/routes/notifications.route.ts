@@ -7,6 +7,7 @@ import {
   getUserNotifications,
   deleteNotification,
   notificationMarkAsRead,
+  getNotification
 } from "../controllers/notifications.controller";
 import { requireAuth } from "@clerk/express";
 
@@ -59,6 +60,19 @@ router.route("/user").get(requireAuth(), getUserNotifications);
 /**
  * @swagger
  * /api/v1/notifications/{id}:
+ *   get:
+ *     summary: Get Notification by id
+ *     tags:
+ *      - Notifications
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: Notification information
  *   patch:
  *     summary: Mark notification as read
  *     tags:
@@ -88,6 +102,7 @@ router.route("/user").get(requireAuth(), getUserNotifications);
  */
 router
   .route("/:id")
+  .get(getNotification)
   .patch(notificationMarkAsRead)
   .delete(deleteNotification);
 
