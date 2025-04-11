@@ -24,6 +24,8 @@ const specialistSchema = new mongoose.Schema({
   service: { type: mongoose.Schema.Types.ObjectId, ref: "Services" },
 });
 
+specialistSchema.index({ "specialties.name": 1, location: 1, rating: -1 });
+
 export type Specialist = mongoose.InferSchemaType<typeof specialistSchema>;
 export const SpecialistModel = mongoose.model<Specialist>(
   "Specialist",

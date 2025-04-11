@@ -12,7 +12,8 @@ import {
   updateBooking,
   deleteBooking,
   getAvailableSlots,
-  getCurrentBookings
+  getCurrentBookings,
+  getSpecialistBooking
 } from "../controllers/bookings.controller";
 
 const router = express.Router();
@@ -100,6 +101,20 @@ router.route("/available").get(getAvailableSlots);
  *         description: List of user bookings
  */
 router.route("/user").get(requireAuth(), getBooking);
+
+/**
+ * @swagger
+ * /api/v1/bookings/specialist/{id}:
+ *   get:
+ *     summary: Get specialist bookings
+ *     tags: [Bookings]
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: List of specialist bookings
+ */
+router.route("/specialist/:id").get(getSpecialistBooking);
 
 /**
  * @swagger

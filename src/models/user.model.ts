@@ -15,6 +15,10 @@ const userSchema = new mongoose.Schema({
   },
   login_type: { type: String, required: true },
   auth_id: { type: String, required: true },
+  specialist: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: "Specialist",
+  },
 });
 
 export type User = mongoose.InferSchemaType<typeof userSchema>;

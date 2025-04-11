@@ -12,6 +12,8 @@ const servicesSchema = new mongoose.Schema({
   aviability: mongoose.Schema.Types.Mixed,
 });
 
+servicesSchema.index({ location: 1, type: 1, price: 1 });
+
 export type Services = mongoose.InferSchemaType<typeof servicesSchema>;
 export const ServicesModel = mongoose.model<Services>(
   "Services",

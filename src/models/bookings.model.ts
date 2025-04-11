@@ -9,7 +9,12 @@ const bookingsSchema = new mongoose.Schema({
   },
   client: {
     type: mongoose.Schema.Types.ObjectId,
-    ref: "Patient",
+    ref: "User",
+    required: true,
+  },
+  specialist: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: "Specialist",
     required: true,
   },
   startTime: String,
@@ -37,6 +42,8 @@ bookingsSchema.pre("save", function (next) {
     .toDate();
   next();
 });
+
+bookingsSchema.index({ user: 1, status: 1, date: 1 });
 
 export type Bookings = mongoose.InferSchemaType<typeof bookingsSchema>;
 export const BookingsModel = mongoose.model<Bookings>(

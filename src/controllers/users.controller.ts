@@ -56,6 +56,7 @@ export const updateUser = asyncHandler(async (req: Request, res: Response) => {
     user.role = req.body.role || user.role;
     user.login_type = req.body.login_type || user.login_type;
     user.auth_id = req.body.auth_id || user.auth_id;
+    user.specialist = req.body.specialist || user.specialist;
 
     const updatedUser = await user.save();
     res.json(updatedUser);
@@ -77,7 +78,7 @@ export const deleteUser = asyncHandler(async (req: Request, res: Response) => {
 
 export const upgradeUserToSpecialist = asyncHandler(
   async (req: Request, res: Response) => {
-    const { auth_id } = req.body;
+    const { auth_id, specialist_id } = req.body;
 
     const user = await UserModel.findOne({
       auth_id,
@@ -89,6 +90,7 @@ export const upgradeUserToSpecialist = asyncHandler(
     }
 
     user.role = "specialist";
+    user.specialist = specialist_id;
 
     await user.save();
 

@@ -7,6 +7,7 @@ import { ServicesModel } from "../models/services.model";
 import { getTimeSlots, parseTime } from "../services/bookings.service";
 import { UserModel } from "../models/user.model";
 import notificationsService from "../services/notifications.service";
+import { SpecialistModel } from "../models/specialist.model";
 
 interface Timings {
   day: string;
@@ -77,12 +78,12 @@ export const getBooking = asyncHandler(async (req: Request, res: Response) => {
 
   const today = dayjs();
 
-  const booking = await BookingsModel.find({
+  const bookings = await BookingsModel.find({
     client: user._id,
     bookingStart: {
       $gte: today.startOf("day").toDate(),
-      // $lte: today.endOf("week").toDate(),
     },
+    status: { $nin: ["cancelled", "completed"] },
   })
     .populate({
       path: "service",
@@ -94,13 +95,60 @@ export const getBooking = asyncHandler(async (req: Request, res: Response) => {
       },
     })
     .lean();
-  if (booking) {
-    res.json(booking);
+  if (bookings) {
+    res.json(bookings);
   } else {
     res.status(404);
     throw new Error("Booking not found");
   }
 });
+
+export const getSpecialistBooking = asyncHandler(
+  async (req: Request, res: Response) => {
+    const { userId } = getAuth(req);
+    if (!userId) {
+      res.status(401);
+      throw new Error("Unauthorized");
+    }
+
+    const specialist = await SpecialistModel.findOne({
+      _id: req.params.id,
+    }).lean();
+    if (!specialist) {
+      res.status(404);
+      throw new Error("Specialist not found");
+    }
+
+    const today = dayjs();
+
+    const bookings = await BookingsModel.find({
+      specialist: req.params.id,
+      bookingStart: {
+        $gte: today.startOf("day").toDate(),
+      },
+      status: { $nin: ["cancelled", "completed"] },
+    })
+      .populate("client")
+      .populate({
+        path: "service",
+        select: "label location specialist",
+        populate: {
+          path: "specialist",
+          select: "user prefix",
+          populate: { path: "user", select: "name lastname" },
+        },
+      })
+      .lean()
+      .exec();
+    if (bookings) {
+      console.log(bookings);
+      res.json(bookings);
+    } else {
+      res.status(404);
+      throw new Error("Booking not found");
+    }
+  }
+);
 
 export const updateBooking = asyncHandler(
   async (req: Request, res: Response) => {
