@@ -16,6 +16,8 @@ export const specialists: any[] = [
         "rating": 4.9,
         "reviews": ["Excelente atención.", "Muy profesional y amable."],
         "category": "medicine",
+        "is_active": true,
+        "is_verified": true,
       },
       {
         "prefix": "Mtra.",
@@ -34,6 +36,8 @@ export const specialists: any[] = [
         "rating": 5.0,
         "reviews": ["Muy buena con los niños.", "Atención impecable."],
         "category": "mental-health",
+        "is_active": true,
+        "is_verified": true,
       },
       {
         "prefix": "Dr.",
@@ -52,6 +56,8 @@ export const specialists: any[] = [
         "rating": 4.8,
         "reviews": ["Muy profesional.", "Transformó mi vida para mejor."],
         "category": "mental-health",
+        "is_active": true,
+        "is_verified": true,
       },
       {
         "prefix": "Dra.",
@@ -70,6 +76,8 @@ export const specialists: any[] = [
         "rating": 4.6,
         "reviews": ["Resultados excelentes.", "Muy atenta y profesional."],
         "category": "physical-health",
+        "is_active": true,
+        "is_verified": true,
       },
       {
         "prefix": "Dr.",
@@ -88,6 +96,8 @@ export const specialists: any[] = [
         "rating": 4.9,
         "reviews": ["El mejor en su área.", "Muy preciso y confiable."],
         "category": "physical-health",
+        "is_active": true,
+        "is_verified": true,
       },
       {
         "prefix": "Dra.",
@@ -106,6 +116,8 @@ export const specialists: any[] = [
         "rating": 4.5,
         "reviews": ["Muy comprensiva.", "Trato excelente y profesional."],
         "category": "nursing",
+        "is_active": true,
+        "is_verified": true,
       },
       {
         "prefix": "Dr.",
@@ -124,6 +136,8 @@ export const specialists: any[] = [
         "rating": 4.7,
         "reviews": ["Muy detallista y cuidadoso.", "Resultados impecables."],
         "category": "dentistry",
+        "is_active": true,
+        "is_verified": true,
       },
       {
         "prefix": "Dr.",
@@ -142,6 +156,8 @@ export const specialists: any[] = [
         "rating": 4.9,
         "reviews": ["Muy atento y profesional.", "Gran conocimiento en su área."],
         "category": "physical-health",
+        "is_active": true,
+        "is_verified": true,
       },
       {
         "prefix": "Dra.",
@@ -160,6 +176,8 @@ export const specialists: any[] = [
         "rating": 4.8,
         "reviews": ["Me ayudó muchísimo con mis migrañas.", "Muy profesional y empática."],
         "category": "medicine",
+        "is_active": true,
+        "is_verified": true,
       },
       {
         "prefix": "Dr.",
@@ -178,5 +196,7 @@ export const specialists: any[] = [
         "rating": 4.7,
         "reviews": ["Salvó a mi mascota.", "Muy atento con los animales."],
         "category": "vet",
+        "is_active": true,
+        "is_verified": true,
       }
 ];
