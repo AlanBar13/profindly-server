@@ -27,7 +27,7 @@ const bookingsSchema = new mongoose.Schema({
   bookDate: String,
   bookingStart: Date,
   bookingEnd: Date,
-});
+}, { timestamps: true });
 
 bookingsSchema.pre("save", function (next) {
   const booking = this as Bookings;

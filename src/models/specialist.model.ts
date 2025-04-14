@@ -22,7 +22,7 @@ const specialistSchema = new mongoose.Schema({
   is_verified: { type: Boolean, default: false },
   category: { type: String, enum: categories, required: true },
   service: { type: mongoose.Schema.Types.ObjectId, ref: "Services" },
-});
+}, { timestamps: true });
 
 specialistSchema.index({ "specialties.name": 1, location: 1, rating: -1 });
 

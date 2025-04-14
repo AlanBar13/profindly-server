@@ -10,7 +10,7 @@ const servicesSchema = new mongoose.Schema({
   thumbnail: String,
   location: String,
   aviability: mongoose.Schema.Types.Mixed,
-});
+}, { timestamps: true });
 
 servicesSchema.index({ location: 1, type: 1, price: 1 });
 

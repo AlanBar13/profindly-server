@@ -19,7 +19,7 @@ const userSchema = new mongoose.Schema({
     type: mongoose.Schema.Types.ObjectId,
     ref: "Specialist",
   },
-});
+}, { timestamps: true });
 
 export type User = mongoose.InferSchemaType<typeof userSchema>;
 export const UserModel = mongoose.model<User>("User", userSchema);
