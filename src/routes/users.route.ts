@@ -64,9 +64,23 @@ router.route("/profile").get(requireAuth(), getUserProfile);
  *   post:
  *     summary: Upgrade user to specialist
  *     tags: [Users]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             $ref: '#/components/schemas/UpgradeUser'
  *     responses:
  *       200:
  *         description: User upgraded to specialist
+ *         content:
+ *          application/json:
+ *           schema:
+ *              $ref: '#/components/schemas/Message'
+ *       400:
+ *         description: User already a specialist
+ *       404:
+ *         description: User or specialist not found 
  */
 router.route("/upgradeUser").post(upgradeUserToSpecialist);
 

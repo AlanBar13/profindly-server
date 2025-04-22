@@ -13,6 +13,7 @@ import {
   deleteSpecialist,
   autoComplete,
   uploadSpecialistPhoto,
+  getAllSpecialists
 } from "../controllers/specialist.controller";
 import { requireAuth } from "@clerk/express";
 import upload from "../config/upload";
@@ -55,7 +56,7 @@ router
   .get(getSpecialists)
   .post(requireAuth(), validateData(specialistSchema), createSpecialist);
 
-  /**
+/**
  * @swagger
  * /api/v1/specialists/autocomplete:
  *   get:
@@ -66,6 +67,18 @@ router
  *         description: List of autocomplete suggestions
  */
 router.route("/autocomplete").get(autoComplete);
+
+/**
+ * @swagger
+ * /api/v1/specialists/all:
+ *   get:
+ *     summary: Gets all specialists
+ *     tags: [Specialists]
+ *     responses:
+ *       200:
+ *         description: List of all sepcialists
+ */
+router.route("/all").get(getAllSpecialists);
 
 /**
  * @swagger

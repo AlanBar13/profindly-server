@@ -114,6 +114,18 @@ export const getSpecialists = asyncHandler(
   }
 );
 
+export const getAllSpecialists = asyncHandler(async (req: Request, res: Response) => {
+  const { page = 1, limit = 50 } = req.query;
+  const skip = (Number(page) - 1) * Number(limit);
+  const specialists = await SpecialistModel.find()
+    .populate("user")
+    .skip(skip)
+    .limit(Number(limit))
+    .lean();
+
+  res.json(specialists);
+})
+
 export const getSpecialist = asyncHandler(
   async (req: Request, res: Response) => {
     const specialist = await SpecialistModel.findById(req.params.id)

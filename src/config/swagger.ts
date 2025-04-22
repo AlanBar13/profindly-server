@@ -242,6 +242,61 @@ const options = {
             "auth_id",
           ],
         },
+        Dashboard: {
+          type: "object",
+          properties: {
+            users: {
+              type: "number",
+            },
+            bookings: {
+              type: "number",
+            },
+            specialists: {
+              type: "number",
+            },
+            services: {
+              type: "number",
+            },
+            pendingBookings: {
+              type: "number",
+            },
+            completedBookings: {
+              type: "number",
+            },
+            cancelledBookings: {
+              type: "number",
+            },
+            totalBookings: {
+              type: "number",
+            },
+            newClients: {
+              type: "number",
+            },
+            newSpecialists: {
+              type: "number",
+            },
+          },
+        },
+        UpgradeUser: {
+          type: "object",
+          properties: {
+            auth_id: {
+              type: "string",
+            },
+            specialist_id: {
+              type: "string",
+            },
+          },
+          required: ["auth_id", "specialist_id"],
+        },
+        Message: {
+          type: "object",
+          properties: {
+            message: {
+              type: "string",
+            }
+          }
+        }
       },
       securitySchemes: {
         bearerAuth: {

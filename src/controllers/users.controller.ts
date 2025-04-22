@@ -2,6 +2,7 @@ import type { Request, Response } from "express";
 import asyncHandler from "express-async-handler";
 import { UserModel } from "../models/user.model";
 import { getAuth, clerkClient } from "@clerk/express";
+import { SpecialistModel } from "../models/specialist.model";
 
 export const createUser = asyncHandler(async (req: Request, res: Response) => {
   const existingUser = await UserModel.findOne({
@@ -89,10 +90,28 @@ export const upgradeUserToSpecialist = asyncHandler(
       throw new Error("User not found");
     }
 
+    const specialist = await SpecialistModel.findOne({ user: user._id });
+
+    if (!specialist) {
+      res.status(404);
+      throw new Error("Specialist not found");
+    }
+
+    // Check if user is already a specialist
+    if (user.role === "specialist" && specialist.is_verified) {
+      res.status(400);
+      throw new Error("User is already a specialist");
+    }
+    
+    // Update user with sepcialist role and specialist id
     user.role = "specialist";
     user.specialist = specialist_id;
 
+    // Update specialist with verified status
+    specialist.is_verified = true;
+
     await user.save();
+    await specialist.save();
 
     await clerkClient.users.updateUserMetadata(auth_id, {
       publicMetadata: {
