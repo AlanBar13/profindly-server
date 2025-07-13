@@ -3,6 +3,6 @@ import { matcher } from '../controllers/matching.controller';
 
 const router = express.Router();
 
-router.route('/:id').get(matcher);
+router.route('/').post(matcher);
 
 export default router;
