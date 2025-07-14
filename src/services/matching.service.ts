@@ -98,7 +98,11 @@ class MatchingService {
 
   async matchSpecialistAI(specialists: Specialist[], info: PatientInfo) {
     const instructions =
-      "Eres un asistente médico experto. Basado en los síntomas o descripción del paciente, devuelve solo 3 especialistas más relevantes como un arreglo JSON. Sé preciso y no divagues. No des información médica, solo recomendaciones de especialistas.";
+      `Eres un asistente médico experto. 
+      Basado en los síntomas o descripción del paciente, devuelve solo 3 especialistas más relevantes, 
+      pero solo si el espcialista es relevante para los sintomas si no lo es no lo regreses, como un arreglo JSON.
+      Que el especialista que tenga mejor rating sea el primero.
+      Sé preciso y no divagues. No des información médica, solo recomendaciones de especialistas.`;
 
     const input = `Paciente:
             Edad: ${info.age}
@@ -109,7 +113,7 @@ class MatchingService {
             Especialistas disponibles:
             ${specialists
               .map(
-                (spec) =>
+                (spec: Specialist) =>
                   `especialista: ${spec.prefix} ${(spec.user as any).name} ${
                     (spec.user as any).lastname
                   }, especialidad: ${spec.speciality.join(
@@ -124,7 +128,8 @@ class MatchingService {
                     spec.experience ?? "No especificada"
                   }, rating: ${
                     spec.rating ?? "No especificada"
-                  }, descripcion: ${spec.brief_description}`
+                  }, descripcion: ${spec.brief_description}, 
+                  id: ${spec._id}`
               )
               .join("\n")}
 
@@ -134,7 +139,7 @@ class MatchingService {
       instructions,
       input
     );
-    console.log("AI Response:", response);
+
     return response;
   }
 }

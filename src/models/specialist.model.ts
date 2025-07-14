@@ -2,6 +2,7 @@ import * as mongoose from "mongoose";
 import { categories } from "../constants/categories";
 
 const specialistSchema = new mongoose.Schema({
+  _id: { type: mongoose.Schema.Types.ObjectId, auto: true },
   prefix: String,
   brief_description: { type: String, required: true },
   links: [{ type: String }],
