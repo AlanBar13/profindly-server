@@ -1,41 +1,93 @@
-import { UserModel } from "../models/user.model";
-import { SpecialistModel } from "../models/specialist.model";
-import { ServicesModel } from "../models/services.model";
-import { NotificationsModel } from "../models/notifications.models";
-import { BookingsModel } from "../models/bookings.model";
 import { specialists } from "./SpecialistTestData";
 import { users } from "./UserTestData";
-import mongoose from "mongoose";
+import { prisma } from "../config/prisma";
+import { Prisma } from "../generated/prisma/client"
 
 export const seed = async () => {
   try {
     console.log("Deleting existing data...");
-    await UserModel.deleteMany({});
-    await SpecialistModel.deleteMany({});
-    await ServicesModel.deleteMany({});
-    await NotificationsModel.deleteMany({});
-    await BookingsModel.deleteMany({});
+    await prisma.booking.deleteMany()
+    await prisma.service.deleteMany()
+    await prisma.notification.deleteMany()
+    await prisma.specialist.deleteMany()
+    await prisma.user.deleteMany()
     console.log("Existing data deleted");
     console.log("Seeding new data...");
-    const addedUsers = await UserModel.create(users);
-    for (let i = 0; i < specialists.length; i++) {
-      specialists[i].user = addedUsers[i]._id;
-    }
-    await SpecialistModel.create(specialists);
+    const allPromises = users.map(async (u, i) => {
+      let user: Prisma.UserCreateInput = {
+        name: u.name,
+        lastname: u.lastname,
+        gender: u.gender,
+        email: u.email,
+        role: "SPECIALIST",
+        loginType: u.login_type,
+        authId: u.auth_id,
+        specialist: {
+          create: {
+            prefix: specialists[i].prefix,
+            briefDescription: specialists[i].brief_description,
+            description: specialists[i].description,
+            links: specialists[i].links,
+            photoLink: specialists[i].photo_link,
+            budgetRange: specialists[i].budget_range,
+            schedule: specialists[i].schedule,
+            location: specialists[i].location,
+            languages: specialists[i].languages,
+            specialistId: specialists[i].specialist_id,
+            experience: specialists[i].experience,
+            rating: specialists[i].rating,
+            reviews: specialists[i].reviews,
+            category: specialists[i].category,
+            isActive: specialists[i].is_active,
+            isVerified: specialists[i].is_verified
+          }
+        }
+      }
+
+      // Create the user and specialist
+      const createdUser = await prisma.user.create({ data: user, include: { specialist: true } });
+      const specialist = createdUser.specialist;
+
+      if (specialist) {
+        // Handle specialities
+        if (Array.isArray(specialists[i].speciality)) {
+          for (const name of specialists[i].speciality) {
+            let spec = await prisma.speciality.findUnique({ where: { name } });
+            if (!spec) {
+              spec = await prisma.speciality.create({ data: { name } });
+            }
+            await prisma.specialistSpeciality.create({
+              data: {
+                specialistId: specialist.id,
+                specialityId: spec.id,
+              },
+            });
+          }
+        }
+        // Handle subspecialities
+        if (Array.isArray(specialists[i].subspecialities)) {
+          for (const name of specialists[i].subspecialities) {
+            let subspec = await prisma.subspeciality.findUnique({ where: { name } });
+            if (!subspec) {
+              subspec = await prisma.subspeciality.create({ data: { name } });
+            }
+            await prisma.specialistSubspeciality.create({
+              data: {
+                specialistId: specialist.id,
+                subspecialityId: subspec.id,
+              },
+            });
+          }
+        }
+      }
+    });
+
+    await Promise.all(allPromises)
+    
     console.log("Data seeded successfully");
   } catch (error) {
     console.error("Error seeding data:", error);
   }
 };
 
-const mongoURI =
-  process.env.MONGO_URI || "mongodb://localhost:27017/healthcare";
-
-mongoose
-  .connect(mongoURI)
-  .then(() => {
-    console.log("Connected to database");
-    return seed();
-  })
-  .catch((error) => console.error("Error connecting to database:", error))
-  .finally(() => mongoose.disconnect());
+seed();

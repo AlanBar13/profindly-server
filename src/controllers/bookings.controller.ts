@@ -2,12 +2,9 @@ import type { Request, Response } from "express";
 import asyncHandler from "express-async-handler";
 import dayjs from "dayjs";
 import { getAuth } from "@clerk/express";
-import { BookingsModel } from "../models/bookings.model";
-import { ServicesModel } from "../models/services.model";
+import { prisma } from "../config/prisma";
 import { getTimeSlots, parseTime } from "../services/bookings.service";
-import { UserModel } from "../models/user.model";
 import notificationsService from "../services/notifications.service";
-import { SpecialistModel } from "../models/specialist.model";
 
 interface Timings {
   day: string;
@@ -36,30 +33,58 @@ export const createBooking = asyncHandler(
       throw new Error("Unauthorized");
     }
 
-    const user = await UserModel.findOne({ auth_id: userId }).lean();
+    const user = await prisma.user.findFirst({ where: { authId: userId ?? undefined } });
     if (!user) {
       res.status(404);
       throw new Error("User not found");
     }
 
-    const booking = new BookingsModel(req.body);
-    booking.client = user._id;
-    await booking.save();
+    // Calculate bookingStart and bookingEnd
+    const date = dayjs(req.body.bookDate);
+    const bookingStart = date
+      .set("hour", parseInt(req.body.startTime.split(":")[0]))
+      .set("minute", parseInt(req.body.startTime.split(":")[1]))
+      .toDate();
+    const bookingEnd = date
+      .set("hour", parseInt(req.body.endTime.split(":")[0]))
+      .set("minute", parseInt(req.body.endTime.split(":")[1]))
+      .toDate();
+
+    const serviceId = typeof req.body.service === "number" ? req.body.service : parseInt(req.body.service);
+    const service = await prisma.service.findUnique({ where: { id: serviceId }, include: { specialist: true } });
+    if (!service) {
+      res.status(404);
+      throw new Error("Service not found");
+    }
+
+    const booking = await prisma.booking.create({
+      data: {
+        serviceId: service.id,
+        clientId: user.id,
+        specialistId: service.specialistId,
+        startTime: req.body.startTime,
+        endTime: req.body.endTime,
+        status: req.body.status || undefined,
+        bookDate: req.body.bookDate,
+        bookingStart,
+        bookingEnd,
+      },
+    });
 
     await notificationsService.sendNotificationByService(
-      req.body.service,
+      service.id.toString(),
       "Se Agendo una nueva cita",
       `${req.body.bookDate} ${req.body.startTime} - ${req.body.startTime} Revisa las notificaiones para mas detalles`,
-      user._id.toString(),
+      user.id.toString(),
       "action",
-      booking._id.toString()
+      booking.id.toString()
     );
     res.json(booking);
   }
 );
 
 export const getBookings = asyncHandler(async (req: Request, res: Response) => {
-  const bookings = await BookingsModel.find().lean();
+  const bookings = await prisma.booking.findMany({ include: { service: true, client: true, specialist: true } });
   res.json(bookings);
 });
 
@@ -70,7 +95,7 @@ export const getBooking = asyncHandler(async (req: Request, res: Response) => {
     throw new Error("Unauthorized");
   }
 
-  const user = await UserModel.findOne({ auth_id: userId }).lean();
+  const user = await prisma.user.findFirst({ where: { authId: userId ?? undefined } });
   if (!user) {
     res.status(404);
     throw new Error("User not found");
@@ -78,23 +103,26 @@ export const getBooking = asyncHandler(async (req: Request, res: Response) => {
 
   const today = dayjs();
 
-  const bookings = await BookingsModel.find({
-    client: user._id,
-    bookingStart: {
-      $gte: today.startOf("day").toDate(),
-    },
-    status: { $nin: ["cancelled", "completed"] },
-  })
-    .populate({
-      path: "service",
-      select: "label location specialist",
-      populate: {
-        path: "specialist",
-        select: "user prefix",
-        populate: { path: "user", select: "name lastname" },
+  const bookings = await prisma.booking.findMany({
+    where: {
+      clientId: user.id,
+      bookingStart: {
+        gte: today.startOf("day").toDate(),
       },
-    })
-    .lean();
+      status: { notIn: ["CANCELLED", "COMPLETED"] },
+    },
+    include: {
+      service: {
+        include: {
+          specialist: {
+            include: {
+              user: true,
+            },
+          },
+        },
+      },
+    },
+  });
   if (bookings) {
     res.json(bookings);
   } else {
@@ -111,9 +139,8 @@ export const getSpecialistBooking = asyncHandler(
       throw new Error("Unauthorized");
     }
 
-    const specialist = await SpecialistModel.findOne({
-      _id: req.params.id,
-    }).lean();
+    const specialistId = parseInt(req.params.id);
+    const specialist = await prisma.specialist.findUnique({ where: { id: specialistId } });
     if (!specialist) {
       res.status(404);
       throw new Error("Specialist not found");
@@ -121,27 +148,28 @@ export const getSpecialistBooking = asyncHandler(
 
     const today = dayjs();
 
-    const bookings = await BookingsModel.find({
-      specialist: req.params.id,
-      bookingStart: {
-        $gte: today.startOf("day").toDate(),
-      },
-      status: { $nin: ["cancelled", "completed"] },
-    })
-      .populate("client")
-      .populate({
-        path: "service",
-        select: "label location specialist",
-        populate: {
-          path: "specialist",
-          select: "user prefix",
-          populate: { path: "user", select: "name lastname" },
+    const bookings = await prisma.booking.findMany({
+      where: {
+        specialistId: specialist.id,
+        bookingStart: {
+          gte: today.startOf("day").toDate(),
         },
-      })
-      .lean()
-      .exec();
+        status: { notIn: ["CANCELLED", "COMPLETED"] },
+      },
+      include: {
+        client: true,
+        service: {
+          include: {
+            specialist: {
+              include: {
+                user: true,
+              },
+            },
+          },
+        },
+      },
+    });
     if (bookings) {
-      console.log(bookings);
       res.json(bookings);
     } else {
       res.status(404);
@@ -158,15 +186,14 @@ export const updateBooking = asyncHandler(
       throw new Error("Unauthorized");
     }
 
-    const user = await UserModel.findOne({ auth_id: userId }).lean();
+    const user = await prisma.user.findFirst({ where: { authId: userId ?? undefined } });
     if (!user) {
       res.status(404);
       throw new Error("User not found");
     }
 
-    const booking = await BookingsModel.findOne({
-      _id: req.params.id,
-    });
+    const id = parseInt(req.params.id);
+    const booking = await prisma.booking.findUnique({ where: { id } });
     if (booking) {
       const now = dayjs();
       const start = dayjs(booking.bookingStart);
@@ -175,16 +202,19 @@ export const updateBooking = asyncHandler(
         throw new Error("Cannot update booking");
       }
 
-      booking.status = req.body.status || booking.status;
-
-      const updatedBooking = await booking.save();
+      const updatedBooking = await prisma.booking.update({
+        where: { id },
+        data: {
+          status: req.body.status || booking.status,
+        },
+      });
       switch (req.body.status) {
         case "cancelled":
           await notificationsService.sendNotification(
             req.body.fromToken,
             "Se cancelo una cita",
             `El especialista cancelo la cita, ${booking.bookDate} ${booking.startTime} - ${booking.endTime}`,
-            user._id.toString(),
+            user.id.toString(),
             "info"
           );
           break;
@@ -193,7 +223,7 @@ export const updateBooking = asyncHandler(
             req.body.fromToken,
             "Tu cita fue confirmada",
             `Tu cita fue confirmada, ${booking.bookDate} ${booking.startTime} - ${booking.endTime}`,
-            user._id.toString(),
+            user.id.toString(),
             "info"
           );
           break;
@@ -217,52 +247,42 @@ export const deleteBooking = asyncHandler(
       throw new Error("Unauthorized");
     }
 
-    const user = await UserModel.findOne({ auth_id: userId });
+    const user = await prisma.user.findFirst({ where: { authId: userId ?? undefined } });
     if (!user) {
       res.status(404);
       throw new Error("User not found");
     }
 
-    const booking = await BookingsModel.findOne({
-      _id: req.params.id,
-      client: user._id,
-    }).lean();
+    const id = parseInt(req.params.id);
+    const booking = await prisma.booking.findFirst({ where: { id, clientId: user.id } });
     if (!booking) {
       res.status(404);
       throw new Error("Booking not found");
     }
 
-    const bookingDeleted = await BookingsModel.deleteOne({
-      _id: req.params.id,
-      client: user._id,
-    });
-    if (bookingDeleted.deletedCount > 0) {
-      await notificationsService.sendNotificationByService(
-        booking.service._id.toString(),
-        "Se cancelo una cita",
-        `${booking.bookDate} ${booking.startTime} - ${booking.endTime} Revisa las notificaiones para mas detalle`,
-        user._id.toString(),
-        "info",
-        booking._id.toString()
-      );
-      res.json({ message: "Booking removed" });
-    } else {
-      res.status(404);
-      throw new Error("Booking not found");
-    }
+    await prisma.booking.delete({ where: { id } });
+    await notificationsService.sendNotificationByService(
+      booking.serviceId.toString(),
+      "Se cancelo una cita",
+      `${booking.bookDate} ${booking.startTime} - ${booking.endTime} Revisa las notificaiones para mas detalle`,
+      user.id.toString(),
+      "info",
+      booking.id.toString()
+    );
+    res.json({ message: "Booking removed" });
   }
 );
 
 export const getSlots = asyncHandler(async (req: Request, res: Response) => {
-  const serviceId = req.query.serviceId;
+  const serviceId = parseInt(req.query.serviceId as string);
 
-  const service = await ServicesModel.findById(serviceId).lean();
+  const service = await prisma.service.findUnique({ where: { id: serviceId } });
   if (!service) {
     res.status(404);
     throw new Error("Service not found");
   }
 
-  const aviabilityData = service.aviability as Aviability;
+  const aviabilityData = service.aviability as unknown as Aviability;
   const slotsByDay = aviabilityData.timings.map((timing) => {
     return {
       day: timing.day,
@@ -281,11 +301,14 @@ export const getSlots = asyncHandler(async (req: Request, res: Response) => {
 
 export const getCurrentBookings = asyncHandler(
   async (req: Request, res: Response) => {
-    const { serviceId, date } = req.query;
-    const bookings = await BookingsModel.find({
-      service_id: serviceId,
-      bookDate: date,
-    }).lean();
+    const serviceId = parseInt(req.query.serviceId as string);
+    const date = req.query.date as string;
+    const bookings = await prisma.booking.findMany({
+      where: {
+        serviceId,
+        bookDate: date,
+      },
+    });
 
     res.json(bookings);
   }
@@ -293,17 +316,18 @@ export const getCurrentBookings = asyncHandler(
 
 export const getAvailableSlots = asyncHandler(
   async (req: Request, res: Response) => {
-    const { serviceId, date } = req.query;
-    const day = dayjs(date as string).format("dddd");
+    const serviceId = parseInt(req.query.serviceId as string);
+    const date = req.query.date as string;
+    const day = dayjs(date).format("dddd");
 
-    const service = await ServicesModel.findById(serviceId).lean();
+    const service = await prisma.service.findUnique({ where: { id: serviceId } });
     if (!service) {
       res.status(404);
       throw new Error("Service not found");
     }
 
     // Check if the service is available for the day
-    const aviabilityData = service.aviability as Aviability;
+    const aviabilityData = service.aviability as unknown as Aviability;
     const timing = aviabilityData.timings.find((timing) => timing.day === day);
     if (!timing) {
       res.json([]);
@@ -320,14 +344,16 @@ export const getAvailableSlots = asyncHandler(
     );
 
     // Get the booked slots for the day
-    const bookedSlots = await BookingsModel.find({
-      service_id: serviceId,
-      bookDate: date,
-    }).lean();
+    const bookedSlots = await prisma.booking.findMany({
+      where: {
+        serviceId,
+        bookDate: date,
+      },
+    });
 
     let availableTimeSlots = slots;
     // If the date is today, filter out the slots that have already passed
-    if (dayjs(date as string).isSame(dayjs(), "day")) {
+    if (dayjs(date).isSame(dayjs(), "day")) {
       const currentTime = dayjs().format("hh:mm A");
 
       availableTimeSlots = availableTimeSlots?.filter((slot) => {

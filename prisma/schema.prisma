@@ -1,0 +1,178 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id                Int          @id @default(autoincrement())
+  name             String
+  lastname         String
+  gender           String
+  preferredLanguage String?      @map("preferred_language")
+  preferredLocation String?      @map("preferred_location")
+  email            String       @unique
+  notificationToken String?
+  role             Role         @default(USER)
+  loginType        String       @map("login_type")
+  authId           String       @map("auth_id")@unique
+  specialist       Specialist?
+  patient          Patient?
+  bookings         Booking[]
+  notificationsFrom Notification[] @relation("FromUser")
+  notificationsTo   Notification[] @relation("ToUser")
+  createdAt        DateTime     @default(now())
+  updatedAt        DateTime     @updatedAt
+}
+
+model Specialist {
+  id               Int         @id @default(autoincrement())
+  prefix           String?
+  briefDescription String      @map("brief_description")
+  links            String[]
+  photoLink        String?     @map("photo_link")
+  description      String?
+  budgetRange      Int[]      @map("budget_range")
+  schedule         String?
+  location         String?
+  specialistId     String[]    @map("specialist_id")
+  experience       Int?
+  rating           Float?
+  reviews          String[]
+  user             User        @relation(fields: [userId], references: [id])
+  userId           Int         @unique
+  isActive         Boolean     @default(true) @map("is_active")
+  isVerified       Boolean     @default(false) @map("is_verified")
+  category         String      
+  services         Service[]
+  bookings         Booking[]
+  specialities     SpecialistSpeciality[]
+  subspecialities  SpecialistSubspeciality[]
+  languages        String[]
+  @@index([category, isActive])
+}
+
+model SpecialistSpeciality {
+  specialistId Int
+  specialityId Int
+  specialist   Specialist   @relation(fields: [specialistId], references: [id])
+  speciality   Speciality   @relation(fields: [specialityId], references: [id])
+
+  @@id([specialistId, specialityId])
+  @@index([specialityId])
+}
+
+model SpecialistSubspeciality {
+  specialistId    Int
+  subspecialityId Int
+  specialist      Specialist     @relation(fields: [specialistId], references: [id])
+  subspeciality   Subspeciality  @relation(fields: [subspecialityId], references: [id])
+
+  @@id([specialistId, subspecialityId])
+  @@index([subspecialityId])
+}
+
+model Speciality {
+  id           Int           @id @default(autoincrement())
+  name         String        @unique
+  specialists  SpecialistSpeciality[]
+}
+
+model Subspeciality {
+  id           Int           @id @default(autoincrement())
+  name         String        @unique
+  specialists  SpecialistSubspeciality[]
+}
+
+model Service {
+  id           Int        @id @default(autoincrement())
+  specialist   Specialist @relation(fields: [specialistId], references: [id])
+  specialistId Int
+  label        String
+  thumbnail    String?
+  location     String?
+  aviability   Json?
+  bookings     Booking[]
+  createdAt    DateTime   @default(now())
+  updatedAt    DateTime   @updatedAt
+}
+
+model Booking {
+  id           Int          @id @default(autoincrement())
+  service      Service      @relation(fields: [serviceId], references: [id])
+  serviceId    Int
+  client       User         @relation(fields: [clientId], references: [id])
+  clientId     Int
+  specialist   Specialist   @relation(fields: [specialistId], references: [id])
+  specialistId Int
+  startTime    String
+  endTime      String
+  status       BookingStatus @default(PENDING)
+  bookDate     String
+  bookingStart DateTime
+  bookingEnd   DateTime
+  notifications Notification[]
+  createdAt    DateTime     @default(now())
+  updatedAt    DateTime     @updatedAt
+}
+
+model Notification {
+  id        Int       @id @default(autoincrement())
+  from      User      @relation("FromUser", fields: [fromId], references: [id])
+  fromId    Int
+  to        User      @relation("ToUser", fields: [toId], references: [id])
+  toId      Int
+  title     String?
+  message   String
+  read      Boolean   @default(false)
+  type      NotificationType @default(INFO)
+  booking   Booking?  @relation(fields: [bookingId], references: [id])
+  bookingId Int?
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+}
+
+model Patient {
+  id          Int      @id @default(autoincrement())
+  name        String
+  age         Int
+  email       String
+  syntoms     String[]
+  diagnostic  String?
+  treatment   String?
+  budget      Int[]
+  location    String?
+  languages   String[]
+  user        User     @relation(fields: [userId], references: [id])
+  userId      Int      @unique
+}
+
+enum Role {
+  USER
+  PATIENT
+  SPECIALIST
+}
+
+enum BookingStatus {
+  BOOKED
+  PENDING
+  CANCELLED
+  COMPLETED
+}
+
+enum NotificationType {
+  INFO
+  MESSAGE
+  ALERT
+  ACTION
+}

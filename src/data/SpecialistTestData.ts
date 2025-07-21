@@ -1,4 +1,4 @@
-export const specialists: any[] = [
+export const specialists = [
     {
         "prefix": "Dr.",
         "brief_description": "Cardiólogo con amplia experiencia en insuficiencia cardíaca y arritmias.",
