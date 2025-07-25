@@ -32,6 +32,9 @@ export class ExpoNotificationService {
         if (ticket.details && ticket.details.error === "DeviceNotRegistered") {
           response = "DeviceNotRegistered";
         }
+        if (ticket.details && ticket.details.error === "InvalidCredentials") {
+          response = "InvalidCredentials";
+        }
       }
 
       if (ticket.status === "ok") {
@@ -39,6 +42,7 @@ export class ExpoNotificationService {
       }
     }
 
+    console.log("Push notification sent:", response);
     return response;
   }
 }

@@ -10,7 +10,7 @@ export const sendNotification = asyncHandler(
       token,
       title,
       body,
-      user_id,
+      parseInt(user_id),
       type
     );
     res.json({ message });

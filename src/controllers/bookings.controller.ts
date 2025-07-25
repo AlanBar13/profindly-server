@@ -214,7 +214,7 @@ export const updateBooking = asyncHandler(
             req.body.fromToken,
             "Se cancelo una cita",
             `El especialista cancelo la cita, ${booking.bookDate} ${booking.startTime} - ${booking.endTime}`,
-            user.id.toString(),
+            user.id,
             "info"
           );
           break;
@@ -223,7 +223,7 @@ export const updateBooking = asyncHandler(
             req.body.fromToken,
             "Tu cita fue confirmada",
             `Tu cita fue confirmada, ${booking.bookDate} ${booking.startTime} - ${booking.endTime}`,
-            user.id.toString(),
+            user.id,
             "info"
           );
           break;

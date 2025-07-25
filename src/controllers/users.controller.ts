@@ -2,6 +2,7 @@ import type { Request, Response } from "express";
 import asyncHandler from "express-async-handler";
 import { getAuth, clerkClient } from "@clerk/express";
 import { prisma } from "../config/prisma";
+import NotificationService from '../services/notifications.service'
 
 export const createUser = asyncHandler(async (req: Request, res: Response) => {
   const exist = await prisma.user.findFirst({
@@ -72,6 +73,7 @@ export const deleteUser = asyncHandler(async (req: Request, res: Response) => {
       authId: req.params.id,
     },
   });
+  await clerkClient.users.deleteUser(req.params.id)
   res.json({ message: "User removed" });
 });
 
@@ -125,6 +127,10 @@ export const upgradeUserToSpecialist = asyncHandler(
         specialist: true,
       },
     });
+
+    if (user.notificationToken) {
+      await NotificationService.sendNotification(user.notificationToken, "Tu cuenta ha sido actualizada", "Ahora eres un especialista verificado", user.id, "INFO");
+    }
 
     res.json({ message: "User upgraded to specialist sucessfully" });
   }

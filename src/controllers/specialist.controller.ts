@@ -26,18 +26,29 @@ export const createSpecialist = asyncHandler(
     }
 
     // Remove speciality and subspecialities from req.body for specialist creation
-    const { speciality, subspecialities, ...specialistData } = req.body;
+    const specialistData = req.body;
 
     const specialist = await prisma.specialist.create({
       data: {
-        ...specialistData,
         userId: user.id,
+        prefix: specialistData.prefix,
+        briefDescription: specialistData.briefDescription,
+        description: specialistData.description,
+        photoLink: specialistData.photoLink,
+        budgetRange: specialistData.budgetRange,
+        location: specialistData.location,
+        languages: specialistData.languages,
+        experience: specialistData.experience,
+        schedule: specialistData.schedule,
+        specialistId: specialistData.specialistId,
+        links: specialistData.links,
+        category: specialistData.category,
       },
     });
 
     // Handle specialities
-    if (Array.isArray(speciality)) {
-      for (const name of speciality) {
+    if (Array.isArray(specialistData.specialities)) {
+      for (const name of specialistData.specialities) {
         let spec = await prisma.speciality.findUnique({ where: { name } });
         if (!spec) {
           spec = await prisma.speciality.create({ data: { name } });
@@ -51,9 +62,11 @@ export const createSpecialist = asyncHandler(
       }
     }
     // Handle subspecialities
-    if (Array.isArray(subspecialities)) {
-      for (const name of subspecialities) {
-        let subspec = await prisma.subspeciality.findUnique({ where: { name } });
+    if (Array.isArray(specialistData.subspecialities)) {
+      for (const name of specialistData.subspecialities) {
+        let subspec = await prisma.subspeciality.findUnique({
+          where: { name },
+        });
         if (!subspec) {
           subspec = await prisma.subspeciality.create({ data: { name } });
         }
@@ -101,7 +114,7 @@ export const autoComplete = asyncHandler(
         select: { name: true },
         take: 5,
       });
-      results = specialities.map(s => s.name);
+      results = specialities.map((s) => s.name);
     } else if (searchField === "subspecialities") {
       const subspecialities = await prisma.subspeciality.findMany({
         where: {
@@ -113,7 +126,7 @@ export const autoComplete = asyncHandler(
         select: { name: true },
         take: 5,
       });
-      results = subspecialities.map(s => s.name);
+      results = subspecialities.map((s) => s.name);
     }
     res.json(results.slice(0, 3));
   }
@@ -126,15 +139,20 @@ export const getSpecialists = asyncHandler(
     const where: any = {};
     if (category) where.category = decodeURIComponent(category as string);
     if (location) where.location = decodeURIComponent(location as string);
-    if (years) where.experience = { gte: parseInt(decodeURIComponent(years as string)) };
+    if (years)
+      where.experience = { gte: parseInt(decodeURIComponent(years as string)) };
     where.isVerified = true;
 
     let specialistIds: number[] | undefined = undefined;
     if (speciality) {
-      const spec = await prisma.speciality.findUnique({ where: { name: decodeURIComponent(speciality as string) } });
+      const spec = await prisma.speciality.findUnique({
+        where: { name: decodeURIComponent(speciality as string) },
+      });
       if (spec) {
-        const links = await prisma.specialistSpeciality.findMany({ where: { specialityId: spec.id } });
-        specialistIds = links.map(l => l.specialistId);
+        const links = await prisma.specialistSpeciality.findMany({
+          where: { specialityId: spec.id },
+        });
+        specialistIds = links.map((l) => l.specialistId);
       } else {
         specialistIds = [];
       }
@@ -197,13 +215,28 @@ export const getSpecialist = asyncHandler(
     const specialist = await prisma.specialist.findUnique({
       where: { id: parseInt(req.params.id) },
       include: {
-        user: true,
+        user: {
+          select: {
+            name: true,
+            lastname: true,
+          },
+        },
         services: { select: { id: true } },
+        specialities: {
+          select: { speciality: { select: { name: true } } },
+        },
+        subspecialities: {
+          select: { subspeciality: { select: { name: true } } },
+        },
       },
     });
 
     if (specialist) {
-      res.json(specialist);
+      let specialities = specialist.specialities.map((s) => s.speciality.name);
+      let subspecialities = specialist.subspecialities.map(
+        (s) => s.subspeciality.name
+      );
+      res.json({ ...specialist, specialities, subspecialities });
     } else {
       res.status(404);
       throw new Error("Specialist not found");
@@ -240,9 +273,13 @@ export const updateSpecialist = asyncHandler(
     }
     // Update subspecialities
     if (Array.isArray(subspecialities)) {
-      await prisma.specialistSubspeciality.deleteMany({ where: { specialistId } });
+      await prisma.specialistSubspeciality.deleteMany({
+        where: { specialistId },
+      });
       for (const name of subspecialities) {
-        let subspec = await prisma.subspeciality.findUnique({ where: { name } });
+        let subspec = await prisma.subspeciality.findUnique({
+          where: { name },
+        });
         if (!subspec) {
           subspec = await prisma.subspeciality.create({ data: { name } });
         }

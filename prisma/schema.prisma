@@ -39,7 +39,7 @@ model Specialist {
   id               Int         @id @default(autoincrement())
   prefix           String?
   briefDescription String      @map("brief_description")
-  links            String[]
+  links            Json?
   photoLink        String?     @map("photo_link")
   description      String?
   budgetRange      Int[]      @map("budget_range")
@@ -65,7 +65,7 @@ model Specialist {
 model SpecialistSpeciality {
   specialistId Int
   specialityId Int
-  specialist   Specialist   @relation(fields: [specialistId], references: [id])
+  specialist   Specialist   @relation(fields: [specialistId], references: [id], onDelete: Cascade)
   speciality   Speciality   @relation(fields: [specialityId], references: [id])
 
   @@id([specialistId, specialityId])
@@ -75,7 +75,7 @@ model SpecialistSpeciality {
 model SpecialistSubspeciality {
   specialistId    Int
   subspecialityId Int
-  specialist      Specialist     @relation(fields: [specialistId], references: [id])
+  specialist      Specialist     @relation(fields: [specialistId], references: [id], onDelete: Cascade)
   subspeciality   Subspeciality  @relation(fields: [subspecialityId], references: [id])
 
   @@id([specialistId, subspecialityId])

@@ -13,7 +13,7 @@ class NotificationsService {
     token: string,
     title: string,
     body: string,
-    user_id: string,
+    user_id: number,
     type: string = "INFO",
     bookingId?: string,
   ) {
@@ -24,7 +24,7 @@ class NotificationsService {
 
     const notification = await prisma.notification.create({
       data: {
-        fromId: parseInt(user_id),
+        fromId: user_id,
         toId: to.id,
         title,
         message: body,
@@ -36,11 +36,12 @@ class NotificationsService {
       },
     });
 
+    console.log("Notification created:", notification);
     return await this.expoNotificationService.sendPushNotification(
       token,
       title,
       body,
-      notification
+      {fromId: user_id, toId: to.id, title, message: body, type, }
     );
   }
 
