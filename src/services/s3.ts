@@ -1,6 +1,7 @@
 import {
   GetObjectCommand,
   PutObjectCommand,
+  DeleteObjectCommand,
   S3Client,
 } from "@aws-sdk/client-s3";
 import { v4 as uuidv4 } from "uuid";
@@ -73,6 +74,19 @@ class S3Service {
       return url;
     } catch (error) {
       throw new Error(`Error getting preSigned Url`);
+    }
+  }
+
+  async deleteFile(key: string) {
+    try {
+      const command = new DeleteObjectCommand({
+        Bucket: this.bucketName,
+        Key: key
+      })
+      await this.client.send(command);
+      return true;
+    } catch (error) {
+      throw new Error(`Error deleting file: ${error}`);
     }
   }
 }

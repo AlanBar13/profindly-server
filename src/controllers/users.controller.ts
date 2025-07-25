@@ -1,24 +1,27 @@
 import type { Request, Response } from "express";
 import asyncHandler from "express-async-handler";
-import { UserModel } from "../models/user.model";
 import { getAuth, clerkClient } from "@clerk/express";
-import { SpecialistModel } from "../models/specialist.model";
+import { prisma } from "../config/prisma";
+import NotificationService from '../services/notifications.service'
 
 export const createUser = asyncHandler(async (req: Request, res: Response) => {
-  const existingUser = await UserModel.findOne({
-    $or: [{ email: req.body.email }, { auth_id: req.body.auth_id }],
+  const exist = await prisma.user.findFirst({
+    where: {
+      OR: [{ email: req.body.email }, { authId: req.body.authId }],
+    },
   });
-  if (existingUser) {
+
+  if (exist) {
     res.status(403);
     throw new Error("User already exist");
   }
-  const user = new UserModel(req.body);
-  await user.save();
+
+  const user = await prisma.user.create({ data: req.body });
   res.json(user);
 });
 
 export const getUsers = asyncHandler(async (req: Request, res: Response) => {
-  const users = await UserModel.find();
+  const users = await prisma.user.findMany();
   res.json(users);
 });
 
@@ -29,8 +32,10 @@ export const getUserProfile = asyncHandler(
       throw new Error("Not Authenticated, failed to retreive id");
     }
 
-    const user = await UserModel.findOne({
-      auth_id: userId,
+    const user = await prisma.user.findFirst({
+      where: {
+        authId: userId,
+      },
     });
     if (user) {
       res.json(user);
@@ -42,47 +47,47 @@ export const getUserProfile = asyncHandler(
 );
 
 export const updateUser = asyncHandler(async (req: Request, res: Response) => {
-  const user = await UserModel.findOne({ auth_id: req.params.id });
-  if (user) {
-    user.name = req.body.name || user.name;
-    user.lastname = req.body.lastname || user.lastname;
-    user.email = req.body.email || user.email;
-    user.gender = req.body.gender || user.gender;
-    user.preferred_language =
-      req.body.preferred_language || user.preferred_language;
-    user.preferred_location =
-      req.body.preferred_location || user.preferred_location;
-    user.notificationToken =
-      req.body.notificationToken || user.notificationToken;
-    user.role = req.body.role || user.role;
-    user.login_type = req.body.login_type || user.login_type;
-    user.auth_id = req.body.auth_id || user.auth_id;
-    user.specialist = req.body.specialist || user.specialist;
-
-    const updatedUser = await user.save();
-    res.json(updatedUser);
-  } else {
-    res.status(404);
-    throw new Error("User not found");
-  }
+  const updatedUser = await prisma.user.update({
+    where: {
+      authId: req.params.id,
+    },
+    data: {
+      name: req.body.name || undefined,
+      lastname: req.body.lastname || undefined,
+      email: req.body.email || undefined,
+      gender: req.body.gender || undefined,
+      preferredLanguage: req.body.preferred_language || undefined,
+      preferredLocation: req.body.preferred_location || undefined,
+      notificationToken: req.body.notificationToken || undefined,
+      role: req.body.role || undefined,
+      loginType: req.body.loginType || undefined,
+      authId: req.body.authId || undefined,
+    },
+  });
+  res.json(updatedUser);
 });
 
 export const deleteUser = asyncHandler(async (req: Request, res: Response) => {
-  const user = await UserModel.deleteOne({ auth_id: req.params.id });
-  if (user.deletedCount > 0) {
-    res.json({ message: "User removed" });
-  } else {
-    res.status(404);
-    throw new Error("User not found");
-  }
+  await prisma.user.delete({
+    where: {
+      authId: req.params.id,
+    },
+  });
+  await clerkClient.users.deleteUser(req.params.id)
+  res.json({ message: "User removed" });
 });
 
 export const upgradeUserToSpecialist = asyncHandler(
   async (req: Request, res: Response) => {
     const { auth_id, specialist_id } = req.body;
 
-    const user = await UserModel.findOne({
-      auth_id,
+    const user = await prisma.user.findFirst({
+      where: {
+        authId: auth_id,
+      },
+      include: {
+        specialist: true,
+      },
     });
 
     if (!user) {
@@ -90,34 +95,42 @@ export const upgradeUserToSpecialist = asyncHandler(
       throw new Error("User not found");
     }
 
-    const specialist = await SpecialistModel.findOne({ user: user._id });
-
-    if (!specialist) {
+    if (!user.specialist) {
       res.status(404);
       throw new Error("Specialist not found");
     }
 
     // Check if user is already a specialist
-    if (user.role === "specialist" && specialist.is_verified) {
+    if (user.role === "SPECIALIST" && user.specialist.isVerified) {
       res.status(400);
       throw new Error("User is already a specialist");
     }
-    
-    // Update user with sepcialist role and specialist id
-    user.role = "specialist";
-    user.specialist = specialist_id;
 
-    // Update specialist with verified status
-    specialist.is_verified = true;
-
-    await user.save();
-    await specialist.save();
+    // Update user and specialist in a single transaction
+    await prisma.$transaction([
+      prisma.user.update({
+        where: { id: user.id },
+        data: {
+          role: "SPECIALIST",
+        },
+      }),
+      prisma.specialist.update({
+        where: { id: user.specialist.id },
+        data: {
+          isVerified: true,
+        },
+      }),
+    ]);
 
     await clerkClient.users.updateUserMetadata(auth_id, {
       publicMetadata: {
         specialist: true,
       },
     });
+
+    if (user.notificationToken) {
+      await NotificationService.sendNotification(user.notificationToken, "Tu cuenta ha sido actualizada", "Ahora eres un especialista verificado", user.id, "INFO");
+    }
 
     res.json({ message: "User upgraded to specialist sucessfully" });
   }

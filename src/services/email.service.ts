@@ -43,7 +43,7 @@ class EmailSevice {
       await this.client.messages.create(this.domain, {
         from: this.from,
         to: email,
-        subject: "Bienvenido a Profindly",
+        subject: "Bienvenido a NexoMedix",
         template: "welcome message",
         "h:X-Mailgun-Variables": JSON.stringify(data),
       });

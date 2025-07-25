@@ -2,7 +2,6 @@ import express from "express";
 import morgan from "morgan";
 import helmet from "helmet";
 import cors from 'cors';
-import { connectDB } from "./config/database";
 
 import { errorHandler, notFound } from "./middleware/error.middleware";
 import { clerkMiddleware } from "@clerk/express";
@@ -27,8 +26,6 @@ app.use(morgan(":method :url :status - :response-time ms"));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(clerkMiddleware());
-
-connectDB();
 
 app.get("/", (req, res) => {
   res.json("Profindly server running!");

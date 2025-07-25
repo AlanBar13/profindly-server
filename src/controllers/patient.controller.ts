@@ -1,20 +1,33 @@
 import type { Request, Response } from 'express';
 import asyncHandler from 'express-async-handler';
-import { PatientModel } from '../models/patient.model';
+import { prisma } from '../config/prisma';
 
 export const createPatient = asyncHandler(async (req: Request, res: Response) => {
-    const patient = new PatientModel(req.body);
-    await patient.save();
-    res.json(patient);
+    const patient = await prisma.patient.create({
+        data: {
+            name: req.body.name,
+            age: req.body.age,
+            email: req.body.email,
+            syntoms: req.body.syntoms || [],
+            diagnostic: req.body.diagnostic,
+            treatment: req.body.treatment,
+            budget: req.body.budget || [],
+            location: req.body.location,
+            languages: req.body.languages || [],
+            userId: req.body.userId, // userId is required in Prisma schema
+        },
+    });
+    res.status(201).json(patient);
 });
 
 export const getPatients = asyncHandler(async (req: Request, res: Response) => {
-    const patients = await PatientModel.find();
+    const patients = await prisma.patient.findMany();
     res.json(patients);
 });
 
 export const getPatient = asyncHandler(async (req: Request, res: Response) => {
-    const patient = await PatientModel.findById(req.params.id);
+    const id = parseInt(req.params.id);
+    const patient = await prisma.patient.findUnique({ where: { id } });
     if (patient) {
         res.json(patient);
     } else {
@@ -24,31 +37,36 @@ export const getPatient = asyncHandler(async (req: Request, res: Response) => {
 });
 
 export const updatePatient = asyncHandler(async (req: Request, res: Response) => {
-    const patient = await PatientModel.findById(req.params.id);
-    if (patient) {
-        patient.name = req.body.name || patient.name;
-        patient.age = req.body.age || patient.age;
-        patient.email = req.body.email || patient.email;
-        patient.syntoms = req.body.syntoms || patient.syntoms;
-        patient.diagnostic = req.body.diagnostic || patient.diagnostic;
-        patient.treatment = req.body.treatment || patient.treatment;
-        patient.budget = req.body.budget || patient.budget;
-        patient.location = req.body.location || patient.location;
-        patient.languages = req.body.languages || patient.languages;
-
-        const updatedPatient = await patient.save();
+    const id = parseInt(req.params.id);
+    try {
+        const updatedPatient = await prisma.patient.update({
+            where: { id },
+            data: {
+                name: req.body.name,
+                age: req.body.age,
+                email: req.body.email,
+                syntoms: req.body.syntoms,
+                diagnostic: req.body.diagnostic,
+                treatment: req.body.treatment,
+                budget: req.body.budget,
+                location: req.body.location,
+                languages: req.body.languages,
+                userId: req.body.userId,
+            },
+        });
         res.json(updatedPatient);
-    } else {
+    } catch (error) {
         res.status(404);
         throw new Error('Patient not found');
     }
 });
 
 export const deletePatient = asyncHandler(async (req: Request, res: Response) => {
-    const patient = await PatientModel.deleteOne({ _id: req.params.id });
-    if (patient.deletedCount > 0) {
+    const id = parseInt(req.params.id);
+    try {
+        await prisma.patient.delete({ where: { id } });
         res.json({ message: 'Patient removed' });
-    } else {
+    } catch (error) {
         res.status(404);
         throw new Error('Patient not found');
     }
